@@ -1,0 +1,50 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) * .7);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) * 1.25);
+  --radius-xl: calc(var(--radius) * 1.5);
+}
+
+:root {
+  --background: #f2f0e8;
+  --foreground: #17332f;
+  --primary: #0f766e;
+  --primary-foreground: #fff;
+  --secondary: #e7e3d7;
+  --secondary-foreground: #17332f;
+  --muted: #e7e3d7;
+  --muted-foreground: #62716d;
+  --border: #cbc6b9;
+  --input: #c6c1b5;
+  --ring: #d5a43b;
+  --radius: .5rem;
+}
+
+* { border-color: var(--border); }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", system-ui, sans-serif;
+}
+button, select { cursor: pointer; }
+button:focus-visible, select:focus-visible { outline: 2px solid #e0b957; outline-offset: 3px; }
+::selection { background: #d9aa45; color: #17332f; }
