@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 import { Slider } from '@/components/ui/slider';
+import { ImageryWorkspace } from './imagery-workspace';
 
 type Strategy = '不补水' | '面积比例' | '初始缺水比例' | '七天指标优化';
 type WindowKey = '2025-06-01' | '2025-06-08' | '2025-06-15' | '2025-06-22';
@@ -108,7 +109,7 @@ export default function Home() {
             <span className="text-left"><span className="block text-base font-semibold tracking-[.12em]">水脉智调</span><span className="block text-[10px] tracking-[.18em] text-[#b9d2cb]">WETLAND WATER LAB</span></span>
           </button>
           <nav className="hidden items-center gap-7 text-sm text-[#d9e8e4] md:flex" aria-label="主导航">
-            <button onClick={()=>jumpTo('decision')}>情景推演</button><button onClick={()=>jumpTo('region')}>候选区域</button><button onClick={()=>jumpTo('method')}>技术路径</button><button onClick={()=>jumpTo('roadmap')}>72小时落地</button>
+            <button onClick={()=>jumpTo('decision')}>情景推演</button><button onClick={()=>jumpTo('region')}>候选区域</button><button onClick={()=>jumpTo('imagery')}>遥感分析</button><button onClick={()=>jumpTo('method')}>技术路径</button><button onClick={()=>jumpTo('roadmap')}>72小时落地</button>
           </nav>
           <Badge className="border border-[#d5a43b]/50 bg-[#d5a43b]/15 text-[#f3d58f]">赛道 8.2</Badge>
         </div>
@@ -164,6 +165,8 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <ImageryWorkspace />
 
       <section id="method" className="border-y bg-[#e9e5da] py-16 lg:py-24"><div className="mx-auto max-w-7xl px-5 lg:px-8">
         <SectionHeading eyebrow="02 / 技术路径" title="公开数据可启动，三天内可讲清闭环" text="以GEE完成地表状态识别，以ERA5描述区域气象驱动，再将湿地单元状态输入可解释的水量平衡与优化模型。"/>
