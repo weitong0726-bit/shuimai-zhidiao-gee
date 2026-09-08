@@ -15,7 +15,6 @@ import {
   UploadCloud,
 } from 'lucide-react';
 import { buttonVariants } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 import { cn } from '@/lib/utils';
 
@@ -209,7 +208,7 @@ export function ImageryWorkspace() {
 
             <div className="mt-7 border-t border-white/10 pt-6">
               <label htmlFor="gee-file" className="mb-2 block text-xs text-[#aac4bd]">GEE统计结果（.geojson / .json）</label>
-              <Input id="gee-file" type="file" accept=".geojson,.json,application/geo+json,application/json" onChange={importGeoJson} className="border-white/20 bg-white/10 text-sm text-white file:text-white"/>
+              <input id="gee-file" type="file" accept=".geojson,.json,application/geo+json,application/json" onChange={importGeoJson} className="h-9 w-full rounded-lg border border-white/20 bg-white/10 px-2 text-sm text-white file:mr-2 file:border-0 file:bg-transparent file:text-white"/>
               {busy && <p className="mt-3 flex items-center gap-2 text-xs text-[#c8d9d4]"><LoaderCircle className="size-3 animate-spin"/>正在解析与校验字段</p>}
               {error && <p role="alert" className="mt-3 flex gap-2 text-xs leading-5 text-[#ffd0c6]"><AlertCircle className="mt-0.5 size-4 shrink-0"/>{error}</p>}
               {imported && <p className="mt-3 flex gap-2 text-xs leading-5 text-[#bde7d5]"><CheckCircle2 className="mt-0.5 size-4 shrink-0"/>已读取{imported.observations.length}条记录{imported.rejected ? `，过滤${imported.rejected}条无效记录` : ''}。</p>}
@@ -262,7 +261,7 @@ export function ImageryWorkspace() {
 
         <div className="mt-6 rounded-xl border border-[#bdb7a9] bg-[#f8f7f2] p-6 lg:p-8">
           <div className="grid gap-6 lg:grid-cols-[330px_1fr]">
-            <div><div className="flex items-center gap-3"><ImageIcon className="size-5 text-[#0f766e]"/><h3 className="text-lg font-semibold">导入指数图或真彩色图</h3></div><p className="mt-3 text-sm leading-6 text-[#63716d]">将GEE导出的可视化PNG、JPG或WebP放进展示区，用于答辩时对照时序统计。GeoTIFF保留作科研归档，不在浏览器里伪做像元分析。</p><Input className="mt-5" type="file" accept="image/png,image/jpeg,image/webp" multiple onChange={importImages}/></div>
+            <div><div className="flex items-center gap-3"><ImageIcon className="size-5 text-[#0f766e]"/><h3 className="text-lg font-semibold">导入指数图或真彩色图</h3></div><p className="mt-3 text-sm leading-6 text-[#63716d]">将GEE导出的可视化PNG、JPG或WebP放进展示区，用于答辩时对照时序统计。GeoTIFF保留作科研归档，不在浏览器里伪做像元分析。</p><input className="mt-5 h-9 w-full rounded-lg border bg-white px-2 text-sm file:mr-2 file:border-0 file:bg-transparent" type="file" accept="image/png,image/jpeg,image/webp" multiple onChange={importImages}/></div>
             <div className="grid min-h-48 gap-3 sm:grid-cols-2 xl:grid-cols-3">
               {previews.length ? previews.map((item) => <figure key={item.url} className="overflow-hidden rounded-lg border bg-white"><Image src={item.url} alt={item.name} width={640} height={480} unoptimized className="aspect-[4/3] w-full object-contain"/><figcaption className="truncate border-t px-3 py-2 text-xs text-[#687873]">{item.name}</figcaption></figure>) : <div className="grid place-items-center rounded-lg border border-dashed border-[#b7b1a4] bg-white/60 text-center text-sm text-[#73807c] sm:col-span-2 xl:col-span-3"><div><UploadCloud className="mx-auto mb-3 size-7 text-[#8a9893]"/><p>尚未导入展示影像</p><p className="mt-1 text-xs">支持多张PNG、JPG或WebP，仅在当前浏览器预览</p></div></div>}
             </div>
