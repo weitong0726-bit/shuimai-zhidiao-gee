@@ -38,7 +38,9 @@ type ImportSummary = {
   confirmed: boolean;
 };
 
-type PreviewImage = { name: string; url: string };
+export type ImageLayerKey = 'ndvi' | 'ndmi' | 'mndwi' | 'dynamic-world' | 'true-color';
+export type ImportedImageLayer = { name: string; url: string };
+type PreviewImage = ImportedImageLayer & { key: ImageLayerKey | null };
 type RawProperties = Record<string, unknown>;
 
 const indexMeta = {
@@ -48,6 +50,19 @@ const indexMeta = {
 } as const;
 
 type IndexKey = keyof typeof indexMeta;
+
+export type ImageryImportStatus = {
+  fileName: string;
+  indices: IndexKey[];
+  units: string[];
+  recordCount: number;
+  confirmed: boolean;
+};
+
+type ImageryWorkspaceProps = {
+  onStatisticsImported?: (status: ImageryImportStatus | null) => void;
+  onImageLayersChange?: (layers: Partial<Record<ImageLayerKey, ImportedImageLayer>>) => void;
+};
 
 function finiteOrNull(value: unknown) {
   if (value === null || value === undefined || value === '') return null;
@@ -116,7 +131,17 @@ function deltaLabel(delta: number | null) {
   return delta < 0 ? '阶段性下降' : '阶段性上升';
 }
 
-export function ImageryWorkspace() {
+function imageLayerKey(fileName: string): ImageLayerKey | null {
+  const name = fileName.toLowerCase();
+  if (name.includes('mndwi')) return 'mndwi';
+  if (name.includes('ndmi')) return 'ndmi';
+  if (name.includes('ndvi')) return 'ndvi';
+  if (name.includes('dynamic') || /(^|[_-])dw([_.-]|$)/.test(name)) return 'dynamic-world';
+  if (name.includes('true') || name.includes('rgb') || name.includes('color')) return 'true-color';
+  return null;
+}
+
+export function ImageryWorkspace({ onStatisticsImported, onImageLayersChange }: ImageryWorkspaceProps) {
   const [imported, setImported] = useState<ImportSummary | null>(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -153,8 +178,19 @@ export function ImageryWorkspace() {
       setImported(result);
       const nextUnits = Array.from(new Set(result.observations.map((item) => item.id)));
       setUnit(nextUnits.includes('H1') ? 'H1' : nextUnits[0]);
+      const indices = (Object.keys(indexMeta) as IndexKey[]).filter((key) =>
+        result.observations.some((item) => item[key] !== null),
+      );
+      onStatisticsImported?.({
+        fileName: result.fileName,
+        indices,
+        units: nextUnits,
+        recordCount: result.observations.length,
+        confirmed: result.confirmed,
+      });
     } catch (cause) {
       setImported(null);
+      onStatisticsImported?.(null);
       setError(cause instanceof Error ? cause.message : '导入失败，请检查文件。');
     } finally {
       setBusy(false);
@@ -165,7 +201,13 @@ export function ImageryWorkspace() {
   function importImages(event: ChangeEvent<HTMLInputElement>) {
     const files = Array.from(event.target.files ?? []).filter((file) => file.type.startsWith('image/'));
     previews.forEach((item) => URL.revokeObjectURL(item.url));
-    setPreviews(files.map((file) => ({ name: file.name, url: URL.createObjectURL(file) })));
+    const next = files.map((file) => ({ name: file.name, url: URL.createObjectURL(file), key: imageLayerKey(file.name) }));
+    setPreviews(next);
+    const mapped: Partial<Record<ImageLayerKey, ImportedImageLayer>> = {};
+    next.forEach((item) => {
+      if (item.key) mapped[item.key] = { name: item.name, url: item.url };
+    });
+    onImageLayersChange?.(mapped);
     event.target.value = '';
   }
 
@@ -261,9 +303,9 @@ export function ImageryWorkspace() {
 
         <div className="mt-6 rounded-xl border border-[#bdb7a9] bg-[#f8f7f2] p-6 lg:p-8">
           <div className="grid gap-6 lg:grid-cols-[330px_1fr]">
-            <div><div className="flex items-center gap-3"><ImageIcon className="size-5 text-[#0f766e]"/><h3 className="text-lg font-semibold">导入指数图或真彩色图</h3></div><p className="mt-3 text-sm leading-6 text-[#63716d]">将GEE导出的可视化PNG、JPG或WebP放进展示区，用于答辩时对照时序统计。GeoTIFF保留作科研归档，不在浏览器里伪做像元分析。</p><input className="mt-5 h-9 w-full rounded-lg border bg-white px-2 text-sm file:mr-2 file:border-0 file:bg-transparent" type="file" accept="image/png,image/jpeg,image/webp" multiple onChange={importImages}/></div>
+            <div><div className="flex items-center gap-3"><ImageIcon className="size-5 text-[#0f766e]"/><h3 className="text-lg font-semibold">导入指数图或真彩色图</h3></div><p className="mt-3 text-sm leading-6 text-[#63716d]">上传PNG、JPG或WebP后，网站会按文件名识别图层并同步到顶部地图。请分别命名为 H1_NDVI.png、H1_NDMI.png、H1_MNDWI.png；GeoTIFF保留作科研归档。</p><input className="mt-5 h-9 w-full rounded-lg border bg-white px-2 text-sm file:mr-2 file:border-0 file:bg-transparent" type="file" accept="image/png,image/jpeg,image/webp" multiple onChange={importImages}/></div>
             <div className="grid min-h-48 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-              {previews.length ? previews.map((item) => <figure key={item.url} className="overflow-hidden rounded-lg border bg-white"><Image src={item.url} alt={item.name} width={640} height={480} unoptimized className="aspect-[4/3] w-full object-contain"/><figcaption className="truncate border-t px-3 py-2 text-xs text-[#687873]">{item.name}</figcaption></figure>) : <div className="grid place-items-center rounded-lg border border-dashed border-[#b7b1a4] bg-white/60 text-center text-sm text-[#73807c] sm:col-span-2 xl:col-span-3"><div><UploadCloud className="mx-auto mb-3 size-7 text-[#8a9893]"/><p>尚未导入展示影像</p><p className="mt-1 text-xs">支持多张PNG、JPG或WebP，仅在当前浏览器预览</p></div></div>}
+              {previews.length ? previews.map((item) => <figure key={item.url} className="overflow-hidden rounded-lg border bg-white"><Image src={item.url} alt={item.name} width={640} height={480} unoptimized className="aspect-[4/3] w-full object-contain"/><figcaption className="flex items-center justify-between gap-2 border-t px-3 py-2 text-xs text-[#687873]"><span className="truncate">{item.name}</span><b className={item.key ? 'text-[#0f766e]' : 'text-[#a14325]'}>{item.key ? '已同步地图' : '文件名未识别'}</b></figcaption></figure>) : <div className="grid place-items-center rounded-lg border border-dashed border-[#b7b1a4] bg-white/60 text-center text-sm text-[#73807c] sm:col-span-2 xl:col-span-3"><div><UploadCloud className="mx-auto mb-3 size-7 text-[#8a9893]"/><p>尚未导入展示影像</p><p className="mt-1 text-xs">支持多张PNG、JPG或WebP，仅在当前浏览器预览</p></div></div>}
             </div>
           </div>
         </div>

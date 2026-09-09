@@ -23,7 +23,12 @@ import {
   Satellite,
   SlidersHorizontal,
 } from 'lucide-react';
-import { ImageryWorkspace } from './imagery-workspace';
+import {
+  ImageryWorkspace,
+  type ImageLayerKey,
+  type ImageryImportStatus,
+  type ImportedImageLayer,
+} from './imagery-workspace';
 
 type ScenarioRecord = {
   start: string;
@@ -42,12 +47,12 @@ type MatrixFile = {
 
 type LayerKey = 'scope' | 'ndvi' | 'ndmi' | 'mndwi' | 'dynamic-world';
 
-const layers: { key: LayerKey; name: string; detail: string; ready: boolean; color: string }[] = [
-  { key: 'scope', name: '研究区边界', detail: '郑州滩区 / 惠济 / H1 / H2', ready: true, color: '#ecae3e' },
-  { key: 'ndvi', name: 'NDVI 植被活力', detail: 'Sentinel-2 · 20 m', ready: false, color: '#7fb45b' },
-  { key: 'ndmi', name: 'NDMI 冠层含水', detail: '遥感代理变量', ready: false, color: '#55b5a8' },
-  { key: 'mndwi', name: 'MNDWI 开放水体', detail: '水体敏感性核查', ready: false, color: '#62a9d5' },
-  { key: 'dynamic-world', name: 'Dynamic World', detail: '植被 / 水体 / 耕地辅助', ready: false, color: '#ae87cf' },
+const layers: { key: LayerKey; name: string; detail: string; color: string }[] = [
+  { key: 'scope', name: '研究区边界', detail: '郑州滩区 / 惠济 / H1 / H2', color: '#ecae3e' },
+  { key: 'ndvi', name: 'NDVI 植被活力', detail: 'Sentinel-2 · 20 m', color: '#7fb45b' },
+  { key: 'ndmi', name: 'NDMI 冠层含水', detail: '遥感代理变量', color: '#55b5a8' },
+  { key: 'mndwi', name: 'MNDWI 开放水体', detail: '水体敏感性核查', color: '#62a9d5' },
+  { key: 'dynamic-world', name: 'Dynamic World', detail: '植被 / 水体 / 耕地辅助', color: '#ae87cf' },
 ];
 
 const windows = [
@@ -106,6 +111,8 @@ export function WetlandPlatform() {
   const [kc, setKc] = useState(1);
   const [records, setRecords] = useState<ScenarioRecord[]>(fallbackAtDefault);
   const [matrixReady, setMatrixReady] = useState(false);
+  const [imageryStatus, setImageryStatus] = useState<ImageryImportStatus | null>(null);
+  const [imageLayers, setImageLayers] = useState<Partial<Record<ImageLayerKey, ImportedImageLayer>>>({});
 
   useEffect(() => {
     fetch('/wetland-data/scenario_matrix.json')
@@ -137,11 +144,19 @@ export function WetlandPlatform() {
   const advantage = area && optimized ? area.loss - optimized.loss : 0;
   const isDetailedDemo = windowStart === '2025-06-01' && budget === 3000 && kc === 1;
   const layer = layers.find((item) => item.key === activeLayer) ?? layers[0];
+  const activeImage = activeLayer === 'scope' ? null : imageLayers[activeLayer];
+  const hasActiveStatistics = activeLayer !== 'scope' && activeLayer !== 'dynamic-world' && imageryStatus?.indices.includes(activeLayer);
+
+  function layerStatus(key: LayerKey) {
+    if (key === 'scope') return { label: '已接入', className: 'ready' };
+    if (imageLayers[key]) return { label: '图像已接入', className: 'ready' };
+    if (key !== 'dynamic-world' && imageryStatus?.indices.includes(key)) return { label: '统计已接入', className: 'ready' };
+    return { label: '待导入', className: 'waiting' };
+  }
 
   function chooseLayer(key: LayerKey) {
     setActiveLayer(key);
-    const target = layers.find((item) => item.key === key);
-    if (target && !target.ready) {
+    if (layerStatus(key).className === 'waiting') {
       window.setTimeout(() => document.getElementById('map-import')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 250);
     }
   }
@@ -216,13 +231,14 @@ export function WetlandPlatform() {
         <aside className="layer-sidebar">
           <PanelTitle icon={<Layers3 size={15} />} title="数据图层" meta="LAYER CONTROL" />
           <div className="layer-list">
-            {layers.map((item) => (
-              <button key={item.key} className={`layer-row ${activeLayer === item.key ? 'active' : ''}`} onClick={() => chooseLayer(item.key)}>
+            {layers.map((item) => {
+              const status = layerStatus(item.key);
+              return <button key={item.key} className={`layer-row ${activeLayer === item.key ? 'active' : ''}`} onClick={() => chooseLayer(item.key)}>
                 <span className="layer-swatch" style={{ background: item.color }} />
                 <span><b>{item.name}</b><small>{item.detail}</small></span>
-                <em className={item.ready ? 'ready' : 'waiting'}>{item.ready ? '已接入' : '待导入'}</em>
-              </button>
-            ))}
+                <em className={status.className}>{status.label}</em>
+              </button>;
+            })}
           </div>
 
           <div className="data-card">
@@ -243,16 +259,23 @@ export function WetlandPlatform() {
             <div className="map-scale"><i /> 10 km</div>
           </div>
           <div className="map-canvas">
-            <Image src="/boundary-screening.png" alt="郑州滩区与惠济 H1 H2 核查窗口边界筛选图" fill priority sizes="(max-width: 900px) 100vw, 62vw" className="boundary-map" />
-            <button className={`map-pin pin-h1 ${unit === 'H1' ? 'selected' : ''}`} onClick={() => setUnit('H1')}><span>H1</span><small>核查窗口</small></button>
-            <button className={`map-pin pin-h2 ${unit === 'H2' ? 'selected' : ''}`} onClick={() => setUnit('H2')}><span>H2</span><small>核查窗口</small></button>
-            {activeLayer !== 'scope' && (
+            {activeImage ? (
+              <Image src={activeImage.url} alt={`${layer.name}导入图像：${activeImage.name}`} fill unoptimized sizes="(max-width: 900px) 100vw, 62vw" className="imported-layer-map" />
+            ) : (
+              <Image src="/boundary-screening.png" alt="郑州滩区与惠济 H1 H2 核查窗口边界筛选图" fill priority sizes="(max-width: 900px) 100vw, 62vw" className="boundary-map" />
+            )}
+            {!activeImage && <>
+              <button className={`map-pin pin-h1 ${unit === 'H1' ? 'selected' : ''}`} onClick={() => setUnit('H1')}><span>H1</span><small>核查窗口</small></button>
+              <button className={`map-pin pin-h2 ${unit === 'H2' ? 'selected' : ''}`} onClick={() => setUnit('H2')}><span>H2</span><small>核查窗口</small></button>
+            </>}
+            {activeLayer !== 'scope' && !activeImage && (
               <div className="pending-layer">
-                <Satellite size={20} />
-                <div><b>{layer.name} 尚未生成</b><span>运行项目 GEE 脚本后，在下方导入真实 GeoJSON 或指数图。</span></div>
-                <a href="#imagery">进入 GEE 导入模块</a>
+                {hasActiveStatistics ? <CheckCircle2 size={20} /> : <Satellite size={20} />}
+                <div><b>{hasActiveStatistics ? `${layer.name}统计已接入` : `${layer.name}尚未接入`}</b><span>{hasActiveStatistics ? `已读取${imageryStatus?.recordCount ?? 0}条时序记录；如需在地图显示，请上传文件名包含${activeLayer.toUpperCase()}的PNG/JPG。` : '运行项目GEE脚本后，在下方导入真实GeoJSON或对应指数图。'}</span></div>
+                <a href="#imagery">{hasActiveStatistics ? '查看时序或上传图像' : '进入GEE导入模块'}</a>
               </div>
             )}
+            {activeImage && <div className="imported-map-label"><CheckCircle2 size={14} /><span><b>{layer.name}</b>{activeImage.name} · 浏览器本地预览</span></div>}
           </div>
           <div className="map-footer">
             <span><i className="legend candidate" />惠济候选范围</span>
@@ -267,12 +290,12 @@ export function WetlandPlatform() {
             {(['H1', 'H2'] as const).map((id) => <button key={id} onClick={() => setUnit(id)} className={unit === id ? 'active' : ''}>{id}</button>)}
           </div>
           <div className="unit-heading"><span>{unit}</span><div><b>遥感核查窗口</b><small>{units[unit].coordinate}</small></div></div>
-          <div className="verification-state"><AlertTriangle size={16} /><span><b>等待 GEE 影像判读</b>尚未确认湿地类型、边界与供水连通性</span></div>
+          <div className={`verification-state ${imageryStatus ? 'imported' : ''}`}>{imageryStatus ? <CheckCircle2 size={16} /> : <AlertTriangle size={16} />}<span><b>{imageryStatus ? 'GEE统计已接入' : '等待 GEE 影像判读'}</b>{imageryStatus ? `${imageryStatus.recordCount}条记录，包含${imageryStatus.units.join('、')}；仍需核查湿地类型与供水连通性` : '尚未确认湿地类型、边界与供水连通性'}</span></div>
           <dl className="unit-stats">
             <div><dt>几何面积</dt><dd>{units[unit].area}</dd></div>
             <div><dt>影像尺度</dt><dd>20 m</dd></div>
             <div><dt>有效覆盖门槛</dt><dd>≥ 70%</dd></div>
-            <div><dt>当前数据状态</dt><dd className="amber">待导入</dd></div>
+            <div><dt>当前数据状态</dt><dd className={imageryStatus ? 'connected' : 'amber'}>{imageryStatus ? '统计已接入' : '待导入'}</dd></div>
           </dl>
           <p className="unit-note">{units[unit].note}</p>
           <div className="assumption-card">
@@ -352,7 +375,7 @@ export function WetlandPlatform() {
         </div>
       </section>
 
-      <div id="map-import"><ImageryWorkspace /></div>
+      <div id="map-import"><ImageryWorkspace onStatisticsImported={setImageryStatus} onImageLayersChange={setImageLayers} /></div>
 
       <section id="evidence" className="evidence-section">
         <div className="section-heading light"><div><span className="kicker">PROJECT EVIDENCE</span><h2>申报书内容如何落到网站里</h2><p>每个页面模块都对应已有材料、可复现数据或明确的下一步任务。</p></div></div>
