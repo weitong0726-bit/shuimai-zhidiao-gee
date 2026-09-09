@@ -217,13 +217,13 @@ export function ImageryWorkspace({ onStatisticsImported, onImageLayersChange }: 
         <div className="grid gap-5 lg:grid-cols-[1fr_.78fr] lg:items-end">
           <div>
             <div className="mb-3 flex items-center gap-2 text-xs font-medium tracking-[.16em] text-[#9b6a12]"><span className="h-px w-8 bg-current"/>02 / 遥感数据工作台</div>
-            <h2 className="max-w-3xl text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">把H1/H2影像真正接进分析链</h2>
+            <h2 className="max-w-3xl text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">把研究区影像真正接进分析链</h2>
           </div>
           <p className="max-w-xl text-sm leading-7 text-[#5c6b67]">先在GEE运行项目脚本并导出GeoJSON，再在这里完成字段校验、有效覆盖率检查和NDVI、NDMI、MNDWI时序分析。所有计算均在浏览器本地完成，文件不会上传。</p>
         </div>
 
         <div className="mt-9 grid gap-3 sm:grid-cols-4">
-          <Stage number="01" title="研究区" status="已完成" done detail="H1 / H2，各约1 km²"/>
+          <Stage number="01" title="研究区" status="已完成" done detail="自定义单元或H1/H2示例"/>
           <Stage number="02" title="影像检索" status={imported ? '已导入' : '待运行'} done={Boolean(imported)} detail="Sentinel-2 SR，20m统计"/>
           <Stage number="03" title="指数分析" status={imported ? '可分析' : '等待数据'} done={Boolean(imported)} detail="质量门槛 ≥ 70%"/>
           <Stage number="04" title="模型接入" status={imported?.confirmed ? '边界已确认' : '等待确认'} done={Boolean(imported?.confirmed)} detail="不把指数冒充土壤含水率"/>
@@ -237,14 +237,14 @@ export function ImageryWorkspace({ onStatisticsImported, onImageLayersChange }: 
             </div>
 
             <ol className="mt-7 space-y-5 text-sm text-[#d2e1dd]">
-              <li className="flex gap-3"><StepDot value="1"/><span>下载脚本和H1/H2边界，在GEE Code Editor中运行。</span></li>
+              <li className="flex gap-3"><StepDot value="1"/><span>自定义区域使用上方生成的脚本；内置示例可直接下载项目脚本。</span></li>
               <li className="flex gap-3"><StepDot value="2"/><span>核查底图与影像后，将脚本中的边界确认开关改为 true。</span></li>
               <li className="flex gap-3"><StepDot value="3"/><span>从Tasks导出 <b className="font-medium text-white">shuimai_observations.geojson</b>。</span></li>
             </ol>
 
             <div className="mt-7 grid gap-2">
-              <a className={cn(buttonVariants(), 'justify-between bg-[#d9aa45] text-[#17332f] hover:bg-[#e5ba5c]')} href="/gee-wetland-observations.js" download>下载GEE分析脚本 <CloudDownload className="size-4"/></a>
-              <a className={cn(buttonVariants({ variant: 'outline' }), 'justify-between border-white/25 bg-transparent text-white hover:bg-white/10 hover:text-white')} href="/huiji-h1-h2.geojson" download>下载H1/H2边界 <FileJson className="size-4"/></a>
+              <a className={cn(buttonVariants(), 'justify-between bg-[#d9aa45] text-[#17332f] hover:bg-[#e5ba5c]')} href="/gee-wetland-observations.js" download>下载内置示例脚本 <CloudDownload className="size-4"/></a>
+              <a className={cn(buttonVariants({ variant: 'outline' }), 'justify-between border-white/25 bg-transparent text-white hover:bg-white/10 hover:text-white')} href="/huiji-h1-h2.geojson" download>下载H1/H2示例边界 <FileJson className="size-4"/></a>
               <a className={cn(buttonVariants({ variant: 'ghost' }), 'justify-between text-[#c8d9d4] hover:bg-white/10 hover:text-white')} href="https://code.earthengine.google.com/" target="_blank" rel="noreferrer">打开Google Earth Engine <ExternalLink className="size-4"/></a>
             </div>
 
@@ -323,7 +323,7 @@ function StepDot({ value }: { value: string }) {
 }
 
 function EmptyAnalysis() {
-  return <div className="grid min-h-[560px] place-items-center text-center"><div className="max-w-md"><div className="mx-auto grid size-16 place-items-center rounded-full bg-[#e1eee9]"><BarChart3 className="size-7 text-[#0f766e]"/></div><h3 className="mt-5 text-xl font-semibold">等待真实遥感统计</h3><p className="mt-3 text-sm leading-7 text-[#687873]">导入GEE导出的GeoJSON后，这里会自动展示H1/H2的影像有效覆盖率、三类指数时序、水体占比和边界确认状态。</p><div className="mt-5 rounded-lg bg-[#eeeae0] p-4 text-left text-xs leading-5 text-[#68736f]"><strong className="text-[#3f514c]">系统不会做的事：</strong>不会把NDMI直接换算成土壤含水率，也不会在边界未确认时生成正式补水指令。</div></div></div>;
+  return <div className="grid min-h-[560px] place-items-center text-center"><div className="max-w-md"><div className="mx-auto grid size-16 place-items-center rounded-full bg-[#e1eee9]"><BarChart3 className="size-7 text-[#0f766e]"/></div><h3 className="mt-5 text-xl font-semibold">等待真实遥感统计</h3><p className="mt-3 text-sm leading-7 text-[#687873]">导入GEE导出的GeoJSON后，这里会自动展示各研究单元的影像有效覆盖率、三类指数时序、水体占比和边界确认状态。</p><div className="mt-5 rounded-lg bg-[#eeeae0] p-4 text-left text-xs leading-5 text-[#68736f]"><strong className="text-[#3f514c]">系统不会做的事：</strong>不会把NDMI直接换算成土壤含水率，也不会在边界未确认时生成正式补水指令。</div></div></div>;
 }
 
 function MiniMetric({ label, value, note }: { label: string; value: string; note: string }) {
