@@ -45,6 +45,10 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible { 
 .quick-guide>span { margin-right:8px; color:#263f39; font-size:14px; font-weight:700; }
 .quick-guide>div { display:flex; align-items:center; gap:7px; } .quick-guide b { color:#a36e1b; font:700 13px ui-monospace,monospace; }
 .quick-guide em { color:#536963; font-size:13px; font-style:normal; }
+.example-workspace-label { min-height:58px; display:flex; align-items:center; gap:14px; padding:10px max(22px,calc((100vw - 1450px)/2)); color:#c9ddd7; background:#0d302b; border-top:1px solid rgba(255,255,255,.08); border-bottom:1px solid rgba(255,255,255,.08); }
+.example-workspace-label span { padding:4px 7px; color:#203d36; background:#e0b04a; border-radius:3px; font-size:11px; font-weight:700; }
+.example-workspace-label b { font-size:13px; }
+.example-workspace-label a { margin-left:auto; color:#f0cd78; font-size:12px; }
 
 .workspace-shell { width:100%; min-height:705px; display:grid; grid-template-columns:250px minmax(510px,1fr) 300px; color:white; background:#0c2925; border-bottom:1px solid #081f1c; }
 .layer-sidebar,.unit-sidebar { min-width:0; padding:17px 15px; background:#143832; } .layer-sidebar { border-right:1px solid rgba(255,255,255,.1); } .unit-sidebar { border-left:1px solid rgba(255,255,255,.1); }
@@ -155,6 +159,7 @@ footer>div { display:flex; align-items:center; gap:8px; color:#315c53; font-size
   .site-header { padding:0 16px; grid-template-columns:1fr auto; } .site-header nav { display:none; } .brand small { display:none; }
   .hero { grid-template-columns:1fr; gap:28px; padding:36px 20px; } .workspace-shell { display:block; } .layer-sidebar { border-right:0; }
   .quick-guide { flex-wrap:wrap; justify-content:flex-start; gap:10px 14px; }
+  .example-workspace-label { align-items:flex-start; flex-wrap:wrap; padding-top:15px; padding-bottom:15px; } .example-workspace-label a { width:100%; margin-left:0; }
   .layer-list { display:grid; grid-template-columns:repeat(2,1fr); } .map-canvas { min-height:480px; } .unit-sidebar { display:block; }
   .decision-grid { grid-template-columns:1fr; } .explain-card { grid-column:auto; } .prescription-card { grid-template-columns:1fr; padding-bottom:60px; }
   .prescription-units { grid-template-columns:1fr; } .evidence-flow { grid-template-columns:1fr 1fr; } .evidence-flow article { border-bottom:1px solid rgba(255,255,255,.14); }

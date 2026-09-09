@@ -29,6 +29,7 @@ import {
   type ImageryImportStatus,
   type ImportedImageLayer,
 } from './imagery-workspace';
+import { CustomAreaWorkspace } from './custom-area-workspace';
 
 type ScenarioRecord = {
   start: string;
@@ -172,7 +173,7 @@ export function WetlandPlatform() {
       setUnit('H1');
     }
     window.setTimeout(() => {
-      document.getElementById(mode === 'demo' ? 'scenario' : 'workspace')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      document.getElementById(mode === 'demo' ? 'scenario' : 'custom-area')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 120);
   }
 
@@ -185,6 +186,7 @@ export function WetlandPlatform() {
         </a>
         <nav aria-label="主导航">
           <a href="#top">开始使用</a>
+          <a href="#custom-area">导入区域</a>
           <a href="#workspace">研究区</a>
           <a href="#scenario">情景推演</a>
           <a href="#imagery">GEE 数据</a>
@@ -195,12 +197,12 @@ export function WetlandPlatform() {
 
       <section id="top" className="hero">
         <div className="hero-intro">
-          <span className="kicker">第一步 · 确认研究区，再选择使用方式</span>
+          <span className="kicker">第一步 · 上传或确认研究区，再选择使用方式</span>
           <h1>欢迎进入<br />水脉智调。</h1>
-          <p>当前研究范围为郑州沿黄滩区—惠济候选范围，H1、H2 是两个待核查的遥感窗口。你可以直接体验已有情景，也可以从真实 GEE 数据开始分析。</p>
+          <p>你可以上传自己的Shapefile或GeoJSON创建真实分析，也可以使用郑州沿黄滩区H1/H2示例，直接体验已有情景与有限水量优化。</p>
           <div className="scope-confirmation">
             <CheckCircle2 size={18} />
-            <span><b>研究区已准备</b>郑州滩区候选交集 140.01 km² · H1/H2 各约 1 km²</span>
+            <span><b>通用研究区入口已准备</b>支持ZIP格式Shapefile与GeoJSON · H1/H2保留为内置示例</span>
           </div>
         </div>
         <div className="entry-gateway" aria-label="选择使用方式">
@@ -212,7 +214,7 @@ export function WetlandPlatform() {
           </button>
           <button className={`entry-choice real ${entryMode === 'real' ? 'selected' : ''}`} aria-pressed={entryMode === 'real'} onClick={() => startPath('real')}>
             <span className="entry-icon"><Satellite size={22} /></span>
-            <span className="entry-copy"><b>创建真实分析</b><small>从 H1/H2 核查开始，在 GEE 运行脚本并导入结果。</small><em>选择区域 → 运行 GEE → 导入数据</em></span>
+            <span className="entry-copy"><b>创建真实分析</b><small>上传自己的Shapefile或GeoJSON，生成对应区域的GEE分析脚本。</small><em>上传边界 → 运行 GEE → 导入结果</em></span>
             <ArrowRight size={19} />
           </button>
           <a className="entry-download" href="/wetland-data/demo.json" download><Download size={14} />下载可复现实验数据</a>
@@ -221,11 +223,15 @@ export function WetlandPlatform() {
 
       <section className="quick-guide" aria-label="使用流程">
         <span>使用流程</span>
-        <div><b>01</b><em>确认研究区</em></div><ArrowRight size={14} />
+        <div><b>01</b><em>上传或确认研究区</em></div><ArrowRight size={14} />
         <div><b>02</b><em>选择示范或真实分析</em></div><ArrowRight size={14} />
         <div><b>03</b><em>运行诊断与优化</em></div><ArrowRight size={14} />
         <div><b>04</b><em>查看七天补水处方</em></div>
       </section>
+
+      <CustomAreaWorkspace />
+
+      <div className="example-workspace-label"><span>内置示例</span><b>还没有自己的边界？可继续使用郑州惠济H1/H2示例工作台</b><a href="#custom-area">返回上传自定义区域</a></div>
 
       <section id="workspace" className="workspace-shell">
         <aside className="layer-sidebar">
