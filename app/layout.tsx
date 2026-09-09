@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: '水脉智调｜湿地生态补水决策原型',
-  description: '面向黄河郑州段候选区域的公开数据驱动型湿地生态补水决策研究原型。',
+  title: '河韧智镜｜黄河滩区生态韧性数智平台',
+  description: '面向黄河滩区中下游的遥感数字孪生、生态韧性诊断与智能治理原型。',
 };
 
 export default function RootLayout({
