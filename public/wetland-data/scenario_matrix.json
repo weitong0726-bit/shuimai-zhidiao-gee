@@ -1,0 +1,2310 @@
+{
+  "status": "公开历史气象 + 假设地块参数；未完成现场或遥感验证",
+  "note": "四个不重叠历史窗口、六档预算、三档Kc，共72个情景。非独立现场样本；同一桶模型内比较不能验证生态机制。",
+  "records": [
+    {
+      "start": "2025-06-01",
+      "budget_m3": 0,
+      "kc_factor": 0.8,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 52.70958974358974
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 0,
+      "kc_factor": 0.8,
+      "strategy": "面积比例",
+      "used_m3": 0,
+      "loss": 52.70958974358974
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 0,
+      "kc_factor": 0.8,
+      "strategy": "初始缺水量比例",
+      "used_m3": 0,
+      "loss": 52.70958974358974
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 0,
+      "kc_factor": 0.8,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 0,
+      "loss": 52.70958974358974
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 0,
+      "kc_factor": 1.0,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 58.62810531135532
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 0,
+      "kc_factor": 1.0,
+      "strategy": "面积比例",
+      "used_m3": 0,
+      "loss": 58.62810531135532
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 0,
+      "kc_factor": 1.0,
+      "strategy": "初始缺水量比例",
+      "used_m3": 0,
+      "loss": 58.62810531135532
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 0,
+      "kc_factor": 1.0,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 0,
+      "loss": 58.62810531135532
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 0,
+      "kc_factor": 1.2,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 64.03665677655678
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 0,
+      "kc_factor": 1.2,
+      "strategy": "面积比例",
+      "used_m3": 0,
+      "loss": 64.03665677655678
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 0,
+      "kc_factor": 1.2,
+      "strategy": "初始缺水量比例",
+      "used_m3": 0,
+      "loss": 64.03665677655678
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 0,
+      "kc_factor": 1.2,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 0,
+      "loss": 64.03665677655678
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 1000,
+      "kc_factor": 0.8,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 52.70958974358974
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 1000,
+      "kc_factor": 0.8,
+      "strategy": "面积比例",
+      "used_m3": 1000,
+      "loss": 45.68763736263736
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 1000,
+      "kc_factor": 0.8,
+      "strategy": "初始缺水量比例",
+      "used_m3": 1000,
+      "loss": 43.32124908424908
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 1000,
+      "kc_factor": 0.8,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 1000,
+      "loss": 42.2323326007326
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 1000,
+      "kc_factor": 1.0,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 58.62810531135532
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 1000,
+      "kc_factor": 1.0,
+      "strategy": "面积比例",
+      "used_m3": 1000,
+      "loss": 52.11622252747254
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 1000,
+      "kc_factor": 1.0,
+      "strategy": "初始缺水量比例",
+      "used_m3": 1000,
+      "loss": 50.97907783882785
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 1000,
+      "kc_factor": 1.0,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 1000,
+      "loss": 49.50925915750916
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 1000,
+      "kc_factor": 1.2,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 64.03665677655678
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 1000,
+      "kc_factor": 1.2,
+      "strategy": "面积比例",
+      "used_m3": 1000,
+      "loss": 57.769202564102564
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 1000,
+      "kc_factor": 1.2,
+      "strategy": "初始缺水量比例",
+      "used_m3": 1000,
+      "loss": 57.47975787545788
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 1000,
+      "kc_factor": 1.2,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 1000,
+      "loss": 56.43499963369963
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 2000,
+      "kc_factor": 0.8,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 52.70958974358974
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 2000,
+      "kc_factor": 0.8,
+      "strategy": "面积比例",
+      "used_m3": 2000,
+      "loss": 38.54471575091575
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 2000,
+      "kc_factor": 0.8,
+      "strategy": "初始缺水量比例",
+      "used_m3": 2000,
+      "loss": 31.959947985347984
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 2000,
+      "kc_factor": 0.8,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 2000,
+      "loss": 31.68545128205128
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 2000,
+      "kc_factor": 1.0,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 58.62810531135532
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 2000,
+      "kc_factor": 1.0,
+      "strategy": "面积比例",
+      "used_m3": 2000,
+      "loss": 45.33507783882785
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 2000,
+      "kc_factor": 1.0,
+      "strategy": "初始缺水量比例",
+      "used_m3": 2000,
+      "loss": 40.71605036630038
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 2000,
+      "kc_factor": 1.0,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 2000,
+      "loss": 39.87973992673993
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 2000,
+      "kc_factor": 1.2,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 64.03665677655678
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 2000,
+      "kc_factor": 1.2,
+      "strategy": "面积比例",
+      "used_m3": 2000,
+      "loss": 51.413624542124545
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 2000,
+      "kc_factor": 1.2,
+      "strategy": "初始缺水量比例",
+      "used_m3": 2000,
+      "loss": 49.02796666666666
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 2000,
+      "kc_factor": 1.2,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 2000,
+      "loss": 46.96438754578754
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 3000,
+      "kc_factor": 0.8,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 52.70958974358974
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 3000,
+      "kc_factor": 0.8,
+      "strategy": "面积比例",
+      "used_m3": 3000,
+      "loss": 31.46159487179487
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 3000,
+      "kc_factor": 0.8,
+      "strategy": "初始缺水量比例",
+      "used_m3": 3000,
+      "loss": 21.492983150183147
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 3000,
+      "kc_factor": 0.8,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 3000,
+      "loss": 21.492983150183147
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 3000,
+      "kc_factor": 1.0,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 58.62810531135532
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 3000,
+      "kc_factor": 1.0,
+      "strategy": "面积比例",
+      "used_m3": 3000,
+      "loss": 38.2305924908425
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 3000,
+      "kc_factor": 1.0,
+      "strategy": "初始缺水量比例",
+      "used_m3": 3000,
+      "loss": 30.059885531135535
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 3000,
+      "kc_factor": 1.0,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 3000,
+      "loss": 30.059885531135535
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 3000,
+      "kc_factor": 1.2,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 64.03665677655678
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 3000,
+      "kc_factor": 1.2,
+      "strategy": "面积比例",
+      "used_m3": 3000,
+      "loss": 44.64767216117215
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 3000,
+      "kc_factor": 1.2,
+      "strategy": "初始缺水量比例",
+      "used_m3": 3000,
+      "loss": 38.79979743589743
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 3000,
+      "kc_factor": 1.2,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 3000,
+      "loss": 38.76847435897436
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 4000,
+      "kc_factor": 0.8,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 52.70958974358974
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 4000,
+      "kc_factor": 0.8,
+      "strategy": "面积比例",
+      "used_m3": 4000,
+      "loss": 24.63090183150183
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 4000,
+      "kc_factor": 0.8,
+      "strategy": "初始缺水量比例",
+      "used_m3": 3600,
+      "loss": 16.811930402930393
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 4000,
+      "kc_factor": 0.8,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 4000,
+      "loss": 14.678597069597059
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 4000,
+      "kc_factor": 1.0,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 58.62810531135532
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 4000,
+      "kc_factor": 1.0,
+      "strategy": "面积比例",
+      "used_m3": 4000,
+      "loss": 31.224108974358984
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 4000,
+      "kc_factor": 1.0,
+      "strategy": "初始缺水量比例",
+      "used_m3": 3600,
+      "loss": 25.0471684981685
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 4000,
+      "kc_factor": 1.0,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 4000,
+      "loss": 22.6031684981685
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 4000,
+      "kc_factor": 1.2,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 64.03665677655678
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 4000,
+      "kc_factor": 1.2,
+      "strategy": "面积比例",
+      "used_m3": 4000,
+      "loss": 38.083963736263726
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 4000,
+      "kc_factor": 1.2,
+      "strategy": "初始缺水量比例",
+      "used_m3": 3600,
+      "loss": 33.44364468864468
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 4000,
+      "kc_factor": 1.2,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 4000,
+      "loss": 30.77697802197801
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 5000,
+      "kc_factor": 0.8,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 52.70958974358974
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 5000,
+      "kc_factor": 0.8,
+      "strategy": "面积比例",
+      "used_m3": 5000,
+      "loss": 18.653450549450554
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 5000,
+      "kc_factor": 0.8,
+      "strategy": "初始缺水量比例",
+      "used_m3": 3600,
+      "loss": 16.811930402930393
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 5000,
+      "kc_factor": 0.8,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 5000,
+      "loss": 10.59806373626373
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 5000,
+      "kc_factor": 1.0,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 58.62810531135532
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 5000,
+      "kc_factor": 1.0,
+      "strategy": "面积比例",
+      "used_m3": 5000,
+      "loss": 24.623819597069605
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 5000,
+      "kc_factor": 1.0,
+      "strategy": "初始缺水量比例",
+      "used_m3": 3600,
+      "loss": 25.0471684981685
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 5000,
+      "kc_factor": 1.0,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 5000,
+      "loss": 17.732501831501835
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 5000,
+      "kc_factor": 1.2,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 64.03665677655678
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 5000,
+      "kc_factor": 1.2,
+      "strategy": "面积比例",
+      "used_m3": 5000,
+      "loss": 31.209007692307686
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 5000,
+      "kc_factor": 1.2,
+      "strategy": "初始缺水量比例",
+      "used_m3": 3600,
+      "loss": 33.44364468864468
+    },
+    {
+      "start": "2025-06-01",
+      "budget_m3": 5000,
+      "kc_factor": 1.2,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 5000,
+      "loss": 25.244178021978016
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 0,
+      "kc_factor": 0.8,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 57.00536849816851
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 0,
+      "kc_factor": 0.8,
+      "strategy": "面积比例",
+      "used_m3": 0,
+      "loss": 57.00536849816851
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 0,
+      "kc_factor": 0.8,
+      "strategy": "初始缺水量比例",
+      "used_m3": 0,
+      "loss": 57.00536849816851
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 0,
+      "kc_factor": 0.8,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 0,
+      "loss": 57.00536849816851
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 0,
+      "kc_factor": 1.0,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 63.708405677655676
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 0,
+      "kc_factor": 1.0,
+      "strategy": "面积比例",
+      "used_m3": 0,
+      "loss": 63.708405677655676
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 0,
+      "kc_factor": 1.0,
+      "strategy": "初始缺水量比例",
+      "used_m3": 0,
+      "loss": 63.708405677655676
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 0,
+      "kc_factor": 1.0,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 0,
+      "loss": 63.708405677655676
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 0,
+      "kc_factor": 1.2,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 70.1317805860806
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 0,
+      "kc_factor": 1.2,
+      "strategy": "面积比例",
+      "used_m3": 0,
+      "loss": 70.1317805860806
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 0,
+      "kc_factor": 1.2,
+      "strategy": "初始缺水量比例",
+      "used_m3": 0,
+      "loss": 70.1317805860806
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 0,
+      "kc_factor": 1.2,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 0,
+      "loss": 70.1317805860806
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 1000,
+      "kc_factor": 0.8,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 57.00536849816851
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 1000,
+      "kc_factor": 0.8,
+      "strategy": "面积比例",
+      "used_m3": 1000,
+      "loss": 50.095835164835165
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 1000,
+      "kc_factor": 0.8,
+      "strategy": "初始缺水量比例",
+      "used_m3": 1000,
+      "loss": 48.32525860805862
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 1000,
+      "kc_factor": 0.8,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 1000,
+      "loss": 46.92013772893774
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 1000,
+      "kc_factor": 1.0,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 63.708405677655676
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 1000,
+      "kc_factor": 1.0,
+      "strategy": "面积比例",
+      "used_m3": 1000,
+      "loss": 57.282682234432244
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 1000,
+      "kc_factor": 1.0,
+      "strategy": "初始缺水量比例",
+      "used_m3": 1000,
+      "loss": 56.969466117216115
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 1000,
+      "kc_factor": 1.0,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 1000,
+      "loss": 55.51311721611721
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 1000,
+      "kc_factor": 1.2,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 70.1317805860806
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 1000,
+      "kc_factor": 1.2,
+      "strategy": "面积比例",
+      "used_m3": 1000,
+      "loss": 63.82106556776557
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 1000,
+      "kc_factor": 1.2,
+      "strategy": "初始缺水量比例",
+      "used_m3": 1000,
+      "loss": 64.52479597069598
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 1000,
+      "kc_factor": 1.2,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 1000,
+      "loss": 63.16698058608059
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 2000,
+      "kc_factor": 0.8,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 57.00536849816851
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 2000,
+      "kc_factor": 0.8,
+      "strategy": "面积比例",
+      "used_m3": 2000,
+      "loss": 42.698058608058616
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 2000,
+      "kc_factor": 0.8,
+      "strategy": "初始缺水量比例",
+      "used_m3": 2000,
+      "loss": 37.24087179487181
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 2000,
+      "kc_factor": 0.8,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 2000,
+      "loss": 36.83929816849818
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 2000,
+      "kc_factor": 1.0,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 63.708405677655676
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 2000,
+      "kc_factor": 1.0,
+      "strategy": "面积比例",
+      "used_m3": 2000,
+      "loss": 50.69479945054945
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 2000,
+      "kc_factor": 1.0,
+      "strategy": "初始缺水量比例",
+      "used_m3": 2000,
+      "loss": 47.607336996337
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 2000,
+      "kc_factor": 1.0,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 2000,
+      "loss": 45.328694139194134
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 2000,
+      "kc_factor": 1.2,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 70.1317805860806
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 2000,
+      "kc_factor": 1.2,
+      "strategy": "面积比例",
+      "used_m3": 2000,
+      "loss": 57.55999597069598
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 2000,
+      "kc_factor": 1.2,
+      "strategy": "初始缺水量比例",
+      "used_m3": 2000,
+      "loss": 56.919784981684984
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 2000,
+      "kc_factor": 1.2,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 2000,
+      "loss": 53.88435750915751
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 3000,
+      "kc_factor": 0.8,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 57.00536849816851
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 3000,
+      "kc_factor": 0.8,
+      "strategy": "面积比例",
+      "used_m3": 3000,
+      "loss": 35.497509157509164
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 3000,
+      "kc_factor": 0.8,
+      "strategy": "初始缺水量比例",
+      "used_m3": 3000,
+      "loss": 26.303023443223452
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 3000,
+      "kc_factor": 0.8,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 3000,
+      "loss": 26.250443223443234
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 3000,
+      "kc_factor": 1.0,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 63.708405677655676
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 3000,
+      "kc_factor": 1.0,
+      "strategy": "面积比例",
+      "used_m3": 3000,
+      "loss": 43.468545787545786
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 3000,
+      "kc_factor": 1.0,
+      "strategy": "初始缺水量比例",
+      "used_m3": 3000,
+      "loss": 36.51421062271062
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 3000,
+      "kc_factor": 1.0,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 3000,
+      "loss": 36.3964358974359
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 3000,
+      "kc_factor": 1.2,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 70.1317805860806
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 3000,
+      "kc_factor": 1.2,
+      "strategy": "面积比例",
+      "used_m3": 3000,
+      "loss": 50.99751098901098
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 3000,
+      "kc_factor": 1.2,
+      "strategy": "初始缺水量比例",
+      "used_m3": 3000,
+      "loss": 47.023531135531144
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 3000,
+      "kc_factor": 1.2,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 3000,
+      "loss": 46.91955750915751
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 4000,
+      "kc_factor": 0.8,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 57.00536849816851
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 4000,
+      "kc_factor": 0.8,
+      "strategy": "面积比例",
+      "used_m3": 4000,
+      "loss": 28.444625641025645
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 4000,
+      "kc_factor": 0.8,
+      "strategy": "初始缺水量比例",
+      "used_m3": 3600,
+      "loss": 20.989249816849824
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 4000,
+      "kc_factor": 0.8,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 4000,
+      "loss": 18.462849816849822
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 4000,
+      "kc_factor": 1.0,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 63.708405677655676
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 4000,
+      "kc_factor": 1.0,
+      "strategy": "面积比例",
+      "used_m3": 4000,
+      "loss": 36.51377655677656
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 4000,
+      "kc_factor": 1.0,
+      "strategy": "初始缺水量比例",
+      "used_m3": 3600,
+      "loss": 30.82897985347985
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 4000,
+      "kc_factor": 1.0,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 4000,
+      "loss": 28.16231318681319
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 4000,
+      "kc_factor": 1.2,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 70.1317805860806
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 4000,
+      "kc_factor": 1.2,
+      "strategy": "面积比例",
+      "used_m3": 4000,
+      "loss": 44.32300366300366
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 4000,
+      "kc_factor": 1.2,
+      "strategy": "初始缺水量比例",
+      "used_m3": 3600,
+      "loss": 41.18367179487179
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 4000,
+      "kc_factor": 1.2,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 4000,
+      "loss": 38.218871794871795
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 5000,
+      "kc_factor": 0.8,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 57.00536849816851
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 5000,
+      "kc_factor": 0.8,
+      "strategy": "面积比例",
+      "used_m3": 5000,
+      "loss": 21.750671794871803
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 5000,
+      "kc_factor": 0.8,
+      "strategy": "初始缺水量比例",
+      "used_m3": 3600,
+      "loss": 20.989249816849824
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 5000,
+      "kc_factor": 0.8,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 5000,
+      "loss": 13.76204981684982
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 5000,
+      "kc_factor": 1.0,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 63.708405677655676
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 5000,
+      "kc_factor": 1.0,
+      "strategy": "面积比例",
+      "used_m3": 5000,
+      "loss": 29.489388278388287
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 5000,
+      "kc_factor": 1.0,
+      "strategy": "初始缺水量比例",
+      "used_m3": 3600,
+      "loss": 30.82897985347985
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 5000,
+      "kc_factor": 1.0,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 5000,
+      "loss": 22.420979853479857
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 5000,
+      "kc_factor": 1.2,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 70.1317805860806
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 5000,
+      "kc_factor": 1.2,
+      "strategy": "面积比例",
+      "used_m3": 5000,
+      "loss": 37.53004395604396
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 5000,
+      "kc_factor": 1.2,
+      "strategy": "初始缺水量比例",
+      "used_m3": 3600,
+      "loss": 41.18367179487179
+    },
+    {
+      "start": "2025-06-08",
+      "budget_m3": 5000,
+      "kc_factor": 1.2,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 5000,
+      "loss": 31.929271794871795
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 0,
+      "kc_factor": 0.8,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 29.783286446886454
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 0,
+      "kc_factor": 0.8,
+      "strategy": "面积比例",
+      "used_m3": 0,
+      "loss": 29.783286446886454
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 0,
+      "kc_factor": 0.8,
+      "strategy": "初始缺水量比例",
+      "used_m3": 0,
+      "loss": 29.783286446886454
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 0,
+      "kc_factor": 0.8,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 0,
+      "loss": 29.783286446886454
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 0,
+      "kc_factor": 1.0,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 35.79150549450549
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 0,
+      "kc_factor": 1.0,
+      "strategy": "面积比例",
+      "used_m3": 0,
+      "loss": 35.79150549450549
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 0,
+      "kc_factor": 1.0,
+      "strategy": "初始缺水量比例",
+      "used_m3": 0,
+      "loss": 35.79150549450549
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 0,
+      "kc_factor": 1.0,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 0,
+      "loss": 35.79150549450549
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 0,
+      "kc_factor": 1.2,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 42.0121054945055
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 0,
+      "kc_factor": 1.2,
+      "strategy": "面积比例",
+      "used_m3": 0,
+      "loss": 42.0121054945055
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 0,
+      "kc_factor": 1.2,
+      "strategy": "初始缺水量比例",
+      "used_m3": 0,
+      "loss": 42.0121054945055
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 0,
+      "kc_factor": 1.2,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 0,
+      "loss": 42.0121054945055
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 1000,
+      "kc_factor": 0.8,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 29.783286446886454
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 1000,
+      "kc_factor": 0.8,
+      "strategy": "面积比例",
+      "used_m3": 1000,
+      "loss": 23.613526739926744
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 1000,
+      "kc_factor": 0.8,
+      "strategy": "初始缺水量比例",
+      "used_m3": 1000,
+      "loss": 19.178433699633704
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 1000,
+      "kc_factor": 0.8,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 1000,
+      "loss": 19.13448205128205
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 1000,
+      "kc_factor": 1.0,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 35.79150549450549
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 1000,
+      "kc_factor": 1.0,
+      "strategy": "面积比例",
+      "used_m3": 1000,
+      "loss": 29.969117216117212
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 1000,
+      "kc_factor": 1.0,
+      "strategy": "初始缺水量比例",
+      "used_m3": 1000,
+      "loss": 26.4171098901099
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 1000,
+      "kc_factor": 1.0,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 1000,
+      "loss": 25.33390934065934
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 1000,
+      "kc_factor": 1.2,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 42.0121054945055
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 1000,
+      "kc_factor": 1.2,
+      "strategy": "面积比例",
+      "used_m3": 1000,
+      "loss": 36.137336263736266
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 1000,
+      "kc_factor": 1.2,
+      "strategy": "初始缺水量比例",
+      "used_m3": 1000,
+      "loss": 34.27708131868132
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 1000,
+      "kc_factor": 1.2,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 1000,
+      "loss": 31.242874725274724
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 2000,
+      "kc_factor": 0.8,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 29.783286446886454
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 2000,
+      "kc_factor": 0.8,
+      "strategy": "面积比例",
+      "used_m3": 2000,
+      "loss": 17.735767032967033
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 2000,
+      "kc_factor": 0.8,
+      "strategy": "初始缺水量比例",
+      "used_m3": 2000,
+      "loss": 11.51694578754579
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 2000,
+      "kc_factor": 0.8,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 2000,
+      "loss": 11.368143589743589
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 2000,
+      "kc_factor": 1.0,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 35.79150549450549
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 2000,
+      "kc_factor": 1.0,
+      "strategy": "面积比例",
+      "used_m3": 2000,
+      "loss": 23.743776556776563
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 2000,
+      "kc_factor": 1.0,
+      "strategy": "初始缺水量比例",
+      "used_m3": 2000,
+      "loss": 16.381299450549452
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 2000,
+      "kc_factor": 1.0,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 2000,
+      "loss": 16.381299450549452
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 2000,
+      "kc_factor": 1.2,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 42.0121054945055
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 2000,
+      "kc_factor": 1.2,
+      "strategy": "面积比例",
+      "used_m3": 2000,
+      "loss": 30.19708131868132
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 2000,
+      "kc_factor": 1.2,
+      "strategy": "初始缺水量比例",
+      "used_m3": 2000,
+      "loss": 23.026637362637366
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 2000,
+      "kc_factor": 1.2,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 2000,
+      "loss": 22.817182417582416
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 3000,
+      "kc_factor": 0.8,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 29.783286446886454
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 3000,
+      "kc_factor": 0.8,
+      "strategy": "面积比例",
+      "used_m3": 3000,
+      "loss": 13.757892307692305
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 3000,
+      "kc_factor": 0.8,
+      "strategy": "初始缺水量比例",
+      "used_m3": 3000,
+      "loss": 5.123666666666669
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 3000,
+      "kc_factor": 0.8,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 3000,
+      "loss": 5.123666666666669
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 3000,
+      "kc_factor": 1.0,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 35.79150549450549
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 3000,
+      "kc_factor": 1.0,
+      "strategy": "面积比例",
+      "used_m3": 3000,
+      "loss": 17.907052197802198
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 3000,
+      "kc_factor": 1.0,
+      "strategy": "初始缺水量比例",
+      "used_m3": 3000,
+      "loss": 9.343766483516484
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 3000,
+      "kc_factor": 1.0,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 3000,
+      "loss": 9.343766483516484
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 3000,
+      "kc_factor": 1.2,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 42.0121054945055
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 3000,
+      "kc_factor": 1.2,
+      "strategy": "面积比例",
+      "used_m3": 3000,
+      "loss": 24.0471032967033
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 3000,
+      "kc_factor": 1.2,
+      "strategy": "初始缺水量比例",
+      "used_m3": 3000,
+      "loss": 14.399284615384618
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 3000,
+      "kc_factor": 1.2,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 3000,
+      "loss": 14.34433956043956
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 4000,
+      "kc_factor": 0.8,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 29.783286446886454
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 4000,
+      "kc_factor": 0.8,
+      "strategy": "面积比例",
+      "used_m3": 4000,
+      "loss": 10.272081318681318
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 4000,
+      "kc_factor": 0.8,
+      "strategy": "初始缺水量比例",
+      "used_m3": 3600,
+      "loss": 2.932598534798536
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 4000,
+      "kc_factor": 0.8,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 4000,
+      "loss": 2.1357985347985355
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 4000,
+      "kc_factor": 1.0,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 35.79150549450549
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 4000,
+      "kc_factor": 1.0,
+      "strategy": "面积比例",
+      "used_m3": 4000,
+      "loss": 13.354837912087913
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 4000,
+      "kc_factor": 1.0,
+      "strategy": "初始缺水量比例",
+      "used_m3": 3600,
+      "loss": 6.354576923076922
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 4000,
+      "kc_factor": 1.0,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 4000,
+      "loss": 4.754576923076923
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 4000,
+      "kc_factor": 1.2,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 42.0121054945055
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 4000,
+      "kc_factor": 1.2,
+      "strategy": "面积比例",
+      "used_m3": 4000,
+      "loss": 17.86709047619048
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 4000,
+      "kc_factor": 1.2,
+      "strategy": "初始缺水量比例",
+      "used_m3": 3600,
+      "loss": 10.587810989010986
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 4000,
+      "kc_factor": 1.2,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 4000,
+      "loss": 8.903010989010987
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 5000,
+      "kc_factor": 0.8,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 29.783286446886454
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 5000,
+      "kc_factor": 0.8,
+      "strategy": "面积比例",
+      "used_m3": 5000,
+      "loss": 6.997356043956044
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 5000,
+      "kc_factor": 0.8,
+      "strategy": "初始缺水量比例",
+      "used_m3": 3600,
+      "loss": 2.932598534798536
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 5000,
+      "kc_factor": 0.8,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 4500,
+      "loss": 1.4899318681318676
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 5000,
+      "kc_factor": 1.0,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 35.79150549450549
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 5000,
+      "kc_factor": 1.0,
+      "strategy": "面积比例",
+      "used_m3": 5000,
+      "loss": 9.55172252747253
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 5000,
+      "kc_factor": 1.0,
+      "strategy": "初始缺水量比例",
+      "used_m3": 3600,
+      "loss": 6.354576923076922
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 5000,
+      "kc_factor": 1.0,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 5000,
+      "loss": 3.147910256410256
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 5000,
+      "kc_factor": 1.2,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 42.0121054945055
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 5000,
+      "kc_factor": 1.2,
+      "strategy": "面积比例",
+      "used_m3": 5000,
+      "loss": 13.085029670329675
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 5000,
+      "kc_factor": 1.2,
+      "strategy": "初始缺水量比例",
+      "used_m3": 3600,
+      "loss": 10.587810989010986
+    },
+    {
+      "start": "2025-06-15",
+      "budget_m3": 5000,
+      "kc_factor": 1.2,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 5000,
+      "loss": 5.937144322344321
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 0,
+      "kc_factor": 0.8,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 41.23893406593407
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 0,
+      "kc_factor": 0.8,
+      "strategy": "面积比例",
+      "used_m3": 0,
+      "loss": 41.23893406593407
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 0,
+      "kc_factor": 0.8,
+      "strategy": "初始缺水量比例",
+      "used_m3": 0,
+      "loss": 41.23893406593407
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 0,
+      "kc_factor": 0.8,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 0,
+      "loss": 41.23893406593407
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 0,
+      "kc_factor": 1.0,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 47.036894688644686
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 0,
+      "kc_factor": 1.0,
+      "strategy": "面积比例",
+      "used_m3": 0,
+      "loss": 47.036894688644686
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 0,
+      "kc_factor": 1.0,
+      "strategy": "初始缺水量比例",
+      "used_m3": 0,
+      "loss": 47.036894688644686
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 0,
+      "kc_factor": 1.0,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 0,
+      "loss": 47.036894688644686
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 0,
+      "kc_factor": 1.2,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 52.843883882783885
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 0,
+      "kc_factor": 1.2,
+      "strategy": "面积比例",
+      "used_m3": 0,
+      "loss": 52.843883882783885
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 0,
+      "kc_factor": 1.2,
+      "strategy": "初始缺水量比例",
+      "used_m3": 0,
+      "loss": 52.843883882783885
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 0,
+      "kc_factor": 1.2,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 0,
+      "loss": 52.843883882783885
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 1000,
+      "kc_factor": 0.8,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 41.23893406593407
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 1000,
+      "kc_factor": 0.8,
+      "strategy": "面积比例",
+      "used_m3": 1000,
+      "loss": 33.979250549450555
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 1000,
+      "kc_factor": 0.8,
+      "strategy": "初始缺水量比例",
+      "used_m3": 1000,
+      "loss": 29.941281318681323
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 1000,
+      "kc_factor": 0.8,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 1000,
+      "loss": 28.957619780219783
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 1000,
+      "kc_factor": 1.0,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 47.036894688644686
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 1000,
+      "kc_factor": 1.0,
+      "strategy": "面积比例",
+      "used_m3": 1000,
+      "loss": 39.42126831501832
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 1000,
+      "kc_factor": 1.0,
+      "strategy": "初始缺水量比例",
+      "used_m3": 1000,
+      "loss": 36.4407847985348
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 1000,
+      "kc_factor": 1.0,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 1000,
+      "loss": 35.40232326007326
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 1000,
+      "kc_factor": 1.2,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 52.843883882783885
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 1000,
+      "kc_factor": 1.2,
+      "strategy": "面积比例",
+      "used_m3": 1000,
+      "loss": 45.2414194139194
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 1000,
+      "kc_factor": 1.2,
+      "strategy": "初始缺水量比例",
+      "used_m3": 1000,
+      "loss": 43.42600256410257
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 1000,
+      "kc_factor": 1.2,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 1000,
+      "loss": 42.07465311355311
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 2000,
+      "kc_factor": 0.8,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 41.23893406593407
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 2000,
+      "kc_factor": 0.8,
+      "strategy": "面积比例",
+      "used_m3": 2000,
+      "loss": 27.749281318681323
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 2000,
+      "kc_factor": 0.8,
+      "strategy": "初始缺水量比例",
+      "used_m3": 2000,
+      "loss": 18.306665934065936
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 2000,
+      "kc_factor": 0.8,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 2000,
+      "loss": 18.18838901098901
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 2000,
+      "kc_factor": 1.0,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 47.036894688644686
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 2000,
+      "kc_factor": 1.0,
+      "strategy": "面积比例",
+      "used_m3": 2000,
+      "loss": 32.4287847985348
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 2000,
+      "kc_factor": 1.0,
+      "strategy": "初始缺水量比例",
+      "used_m3": 2000,
+      "loss": 24.80616941391942
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 2000,
+      "kc_factor": 1.0,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 2000,
+      "loss": 24.34465293040293
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 2000,
+      "kc_factor": 1.2,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 52.843883882783885
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 2000,
+      "kc_factor": 1.2,
+      "strategy": "面积比例",
+      "used_m3": 2000,
+      "loss": 37.75880256410257
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 2000,
+      "kc_factor": 1.2,
+      "strategy": "初始缺水量比例",
+      "used_m3": 2000,
+      "loss": 31.84007289377289
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 2000,
+      "kc_factor": 1.2,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 2000,
+      "loss": 31.27210805860806
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 3000,
+      "kc_factor": 0.8,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 41.23893406593407
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 3000,
+      "kc_factor": 0.8,
+      "strategy": "面积比例",
+      "used_m3": 3000,
+      "loss": 22.191589010989006
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 3000,
+      "kc_factor": 0.8,
+      "strategy": "初始缺水量比例",
+      "used_m3": 3000,
+      "loss": 8.319705494505497
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 3000,
+      "kc_factor": 0.8,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 3000,
+      "loss": 8.319705494505497
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 3000,
+      "kc_factor": 1.0,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 47.036894688644686
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 3000,
+      "kc_factor": 1.0,
+      "strategy": "面积比例",
+      "used_m3": 3000,
+      "loss": 26.27242582417582
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 3000,
+      "kc_factor": 1.0,
+      "strategy": "初始缺水量比例",
+      "used_m3": 3000,
+      "loss": 13.8394880952381
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 3000,
+      "kc_factor": 1.0,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 3000,
+      "loss": 13.813787545787548
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 3000,
+      "kc_factor": 1.2,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 52.843883882783885
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 3000,
+      "kc_factor": 1.2,
+      "strategy": "面积比例",
+      "used_m3": 3000,
+      "loss": 31.051395970695967
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 3000,
+      "kc_factor": 1.2,
+      "strategy": "初始缺水量比例",
+      "used_m3": 3000,
+      "loss": 20.502877289377285
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 3000,
+      "kc_factor": 1.2,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 3000,
+      "loss": 20.502877289377285
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 4000,
+      "kc_factor": 0.8,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 41.23893406593407
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 4000,
+      "kc_factor": 0.8,
+      "strategy": "面积比例",
+      "used_m3": 4000,
+      "loss": 16.46081978021978
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 4000,
+      "kc_factor": 0.8,
+      "strategy": "初始缺水量比例",
+      "used_m3": 3600,
+      "loss": 4.453723076923077
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 4000,
+      "kc_factor": 0.8,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 4000,
+      "loss": 2.8942564102564097
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 4000,
+      "kc_factor": 1.0,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 47.036894688644686
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 4000,
+      "kc_factor": 1.0,
+      "strategy": "面积比例",
+      "used_m3": 4000,
+      "loss": 20.541656593406596
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 4000,
+      "kc_factor": 1.0,
+      "strategy": "初始缺水量比例",
+      "used_m3": 3600,
+      "loss": 9.105968864468865
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 4000,
+      "kc_factor": 1.0,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 4000,
+      "loss": 6.972635531135531
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 4000,
+      "kc_factor": 1.2,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 52.843883882783885
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 4000,
+      "kc_factor": 1.2,
+      "strategy": "面积比例",
+      "used_m3": 4000,
+      "loss": 24.653960073260073
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 4000,
+      "kc_factor": 1.2,
+      "strategy": "初始缺水量比例",
+      "used_m3": 3600,
+      "loss": 15.110914652014648
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 4000,
+      "kc_factor": 1.2,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 4000,
+      "loss": 12.443181318681315
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 5000,
+      "kc_factor": 0.8,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 41.23893406593407
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 5000,
+      "kc_factor": 0.8,
+      "strategy": "面积比例",
+      "used_m3": 5000,
+      "loss": 11.033050549450552
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 5000,
+      "kc_factor": 0.8,
+      "strategy": "初始缺水量比例",
+      "used_m3": 3600,
+      "loss": 4.453723076923077
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 5000,
+      "kc_factor": 0.8,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 4500,
+      "loss": 2.2617230769230767
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 5000,
+      "kc_factor": 1.0,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 47.036894688644686
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 5000,
+      "kc_factor": 1.0,
+      "strategy": "面积比例",
+      "used_m3": 5000,
+      "loss": 14.810887362637368
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 5000,
+      "kc_factor": 1.0,
+      "strategy": "初始缺水量比例",
+      "used_m3": 3600,
+      "loss": 9.105968864468865
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 5000,
+      "kc_factor": 1.0,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 5000,
+      "loss": 4.5606355311355316
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 5000,
+      "kc_factor": 1.2,
+      "strategy": "不补水",
+      "used_m3": 0,
+      "loss": 52.843883882783885
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 5000,
+      "kc_factor": 1.2,
+      "strategy": "面积比例",
+      "used_m3": 5000,
+      "loss": 18.89172417582418
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 5000,
+      "kc_factor": 1.2,
+      "strategy": "初始缺水量比例",
+      "used_m3": 3600,
+      "loss": 15.110914652014648
+    },
+    {
+      "start": "2025-06-22",
+      "budget_m3": 5000,
+      "kc_factor": 1.2,
+      "strategy": "七天缺水指标优化",
+      "used_m3": 5000,
+      "loss": 8.378647985347984
+    }
+  ]
+}

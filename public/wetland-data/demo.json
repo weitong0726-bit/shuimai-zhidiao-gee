@@ -1,0 +1,1173 @@
+{
+  "project": "水脉智调候选区域研究原型",
+  "status": "公开历史气象 + 假设地块参数；未完成现场或遥感验证",
+  "start": "2025-06-01",
+  "end": "2025-06-07",
+  "budget_m3": 3000,
+  "step_m3": 100,
+  "method": "当前一次补水+7天模拟；离散动态规划；所有比较是模型内指标比较",
+  "weather_source": {
+    "provider": "Open-Meteo / ERA5",
+    "type": "historical_reanalysis_not_forecast",
+    "retrieved_on": "2026-09-07",
+    "requested_latitude": 34.95,
+    "requested_longitude": 113.65,
+    "returned_grid_latitude": 35.0,
+    "returned_grid_longitude": 113.75,
+    "spatial_warning": "约25km网格，只能表示区域气象，不能区分小地块土壤湿度；候选位置未核实为试验区",
+    "url": "https://archive-api.open-meteo.com/v1/archive?latitude=34.95&longitude=113.65&start_date=2025-06-01&end_date=2025-06-30&daily=precipitation_sum,et0_fao_evapotranspiration&timezone=Asia%2FShanghai&models=era5",
+    "documentation": "https://open-meteo.com/en/docs/historical-weather-api",
+    "note": "ERA5-Land尝试返回全空值，未使用；以下气象数值为ERA5接口返回值。"
+  },
+  "parameter_sources": {
+    "A": "全部地块参数为情景假设，待实测或文献约束",
+    "B": "全部地块参数为情景假设，待实测或文献约束",
+    "C": "全部地块参数为情景假设，待实测或文献约束"
+  },
+  "strategies": {
+    "不补水": {
+      "used_m3": 0,
+      "unused_m3": 3000,
+      "loss": 58.62810531135532,
+      "units": [
+        {
+          "id": "A",
+          "name": "假设湿草地A",
+          "supply_m3": 0,
+          "loss": 27.501057692307697,
+          "days_below_threshold": 7,
+          "trajectory": [
+            {
+              "date": "2025-06-01",
+              "storage_mm": 28.691999999999997,
+              "theta": 0.17173,
+              "deficit_ratio": 0.4482307692307693,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 2.8080000000000003,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-02",
+              "storage_mm": 23.160999999999998,
+              "theta": 0.1579025,
+              "deficit_ratio": 0.5545961538461539,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 5.031,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-03",
+              "storage_mm": 16.252999999999997,
+              "theta": 0.1406325,
+              "deficit_ratio": 0.6874423076923077,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 6.408,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-04",
+              "storage_mm": 8.822999999999997,
+              "theta": 0.1220575,
+              "deficit_ratio": 0.8303269230769232,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 6.930000000000001,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-05",
+              "storage_mm": 1.059999999999996,
+              "theta": 0.10264999999999999,
+              "deficit_ratio": 0.9796153846153847,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 7.263000000000001,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-06",
+              "storage_mm": 0.0,
+              "theta": 0.1,
+              "deficit_ratio": 1.0,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 1.059999999999996,
+              "drainage_mm": 0.0,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-07",
+              "storage_mm": 0.0,
+              "theta": 0.1,
+              "deficit_ratio": 1.0,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 0.0,
+              "drainage_mm": 0.0,
+              "balance_residual_mm": 0.0
+            }
+          ]
+        },
+        {
+          "id": "B",
+          "name": "假设湿草地B",
+          "supply_m3": 0,
+          "loss": 12.189333333333337,
+          "days_below_threshold": 5,
+          "trajectory": [
+            {
+              "date": "2025-06-01",
+              "storage_mm": 71.38,
+              "theta": 0.24276,
+              "deficit_ratio": 0.0,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 3.12,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-02",
+              "storage_mm": 65.28999999999999,
+              "theta": 0.23057999999999998,
+              "deficit_ratio": 0.0,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 5.59,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-03",
+              "storage_mm": 57.669999999999995,
+              "theta": 0.21533999999999998,
+              "deficit_ratio": 0.03883333333333342,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 7.12,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-04",
+              "storage_mm": 49.46999999999999,
+              "theta": 0.19894,
+              "deficit_ratio": 0.17550000000000013,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 7.7,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-05",
+              "storage_mm": 40.89999999999999,
+              "theta": 0.1818,
+              "deficit_ratio": 0.31833333333333347,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 8.07,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-06",
+              "storage_mm": 33.29999999999999,
+              "theta": 0.16659999999999997,
+              "deficit_ratio": 0.4450000000000002,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 7.1,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-07",
+              "storage_mm": 27.23999999999999,
+              "theta": 0.15447999999999998,
+              "deficit_ratio": 0.546,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 5.56,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            }
+          ]
+        },
+        {
+          "id": "C",
+          "name": "假设湿草地C",
+          "supply_m3": 0,
+          "loss": 18.937714285714286,
+          "days_below_threshold": 7,
+          "trajectory": [
+            {
+              "date": "2025-06-01",
+              "storage_mm": 15.004,
+              "theta": 0.15001333333333333,
+              "deficit_ratio": 0.6427619047619048,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 2.4960000000000004,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-02",
+              "storage_mm": 10.032,
+              "theta": 0.13344,
+              "deficit_ratio": 0.7611428571428571,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 4.472,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-03",
+              "storage_mm": 3.8359999999999994,
+              "theta": 0.11278666666666667,
+              "deficit_ratio": 0.9086666666666667,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 5.696000000000001,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-04",
+              "storage_mm": 0.0,
+              "theta": 0.1,
+              "deficit_ratio": 1.0,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 3.8359999999999994,
+              "drainage_mm": 0.0,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-05",
+              "storage_mm": 0.0,
+              "theta": 0.1,
+              "deficit_ratio": 1.0,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 0.0,
+              "drainage_mm": 0.0,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-06",
+              "storage_mm": 0.0,
+              "theta": 0.1,
+              "deficit_ratio": 1.0,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 0.0,
+              "drainage_mm": 0.0,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-07",
+              "storage_mm": 0.0,
+              "theta": 0.1,
+              "deficit_ratio": 1.0,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 0.0,
+              "drainage_mm": 0.0,
+              "balance_residual_mm": 0.0
+            }
+          ]
+        }
+      ]
+    },
+    "面积比例": {
+      "used_m3": 3000,
+      "unused_m3": 0,
+      "loss": 38.2305924908425,
+      "units": [
+        {
+          "id": "A",
+          "name": "假设湿草地A",
+          "supply_m3": 1000,
+          "loss": 18.38221153846154,
+          "days_below_threshold": 7,
+          "trajectory": [
+            {
+              "date": "2025-06-01",
+              "storage_mm": 44.692,
+              "theta": 0.21173,
+              "deficit_ratio": 0.14053846153846153,
+              "irrigation_mm": 16.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 2.8080000000000003,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-02",
+              "storage_mm": 39.161,
+              "theta": 0.1979025,
+              "deficit_ratio": 0.24690384615384614,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 5.031,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-03",
+              "storage_mm": 32.253,
+              "theta": 0.1806325,
+              "deficit_ratio": 0.37975,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 6.408,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-04",
+              "storage_mm": 24.823,
+              "theta": 0.16205750000000002,
+              "deficit_ratio": 0.5226346153846154,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 6.930000000000001,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-05",
+              "storage_mm": 17.06,
+              "theta": 0.14265,
+              "deficit_ratio": 0.6719230769230768,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 7.263000000000001,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-06",
+              "storage_mm": 10.169999999999998,
+              "theta": 0.125425,
+              "deficit_ratio": 0.8044230769230769,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 6.39,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-07",
+              "storage_mm": 4.665999999999999,
+              "theta": 0.111665,
+              "deficit_ratio": 0.9102692307692308,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 5.004,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            }
+          ]
+        },
+        {
+          "id": "B",
+          "name": "假设湿草地B",
+          "supply_m3": 1500,
+          "loss": 4.474666666666673,
+          "days_below_threshold": 3,
+          "trajectory": [
+            {
+              "date": "2025-06-01",
+              "storage_mm": 86.38,
+              "theta": 0.27276,
+              "deficit_ratio": 0.0,
+              "irrigation_mm": 15.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 3.12,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-02",
+              "storage_mm": 80.28999999999999,
+              "theta": 0.26058,
+              "deficit_ratio": 0.0,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 5.59,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-03",
+              "storage_mm": 72.66999999999999,
+              "theta": 0.24533999999999997,
+              "deficit_ratio": 0.0,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 7.12,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-04",
+              "storage_mm": 64.46999999999998,
+              "theta": 0.22893999999999998,
+              "deficit_ratio": 0.0,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 7.7,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-05",
+              "storage_mm": 55.899999999999984,
+              "theta": 0.2118,
+              "deficit_ratio": 0.06833333333333359,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 8.07,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-06",
+              "storage_mm": 48.29999999999998,
+              "theta": 0.19659999999999997,
+              "deficit_ratio": 0.19500000000000028,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 7.1,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-07",
+              "storage_mm": 42.23999999999998,
+              "theta": 0.18447999999999998,
+              "deficit_ratio": 0.2960000000000003,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 5.56,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            }
+          ]
+        },
+        {
+          "id": "C",
+          "name": "假设湿草地C",
+          "supply_m3": 500,
+          "loss": 15.373714285714286,
+          "days_below_threshold": 7,
+          "trajectory": [
+            {
+              "date": "2025-06-01",
+              "storage_mm": 27.503999999999998,
+              "theta": 0.19168000000000002,
+              "deficit_ratio": 0.3451428571428571,
+              "irrigation_mm": 12.5,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 2.4960000000000004,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-02",
+              "storage_mm": 22.531999999999996,
+              "theta": 0.17510666666666666,
+              "deficit_ratio": 0.4635238095238095,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 4.472,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-03",
+              "storage_mm": 16.335999999999995,
+              "theta": 0.15445333333333333,
+              "deficit_ratio": 0.6110476190476191,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 5.696000000000001,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-04",
+              "storage_mm": 9.675999999999995,
+              "theta": 0.13225333333333333,
+              "deficit_ratio": 0.7696190476190478,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 6.16,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-05",
+              "storage_mm": 2.7199999999999944,
+              "theta": 0.10906666666666666,
+              "deficit_ratio": 0.9352380952380954,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 6.456,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-06",
+              "storage_mm": 0.0,
+              "theta": 0.1,
+              "deficit_ratio": 1.0,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 2.7199999999999944,
+              "drainage_mm": 0.0,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-07",
+              "storage_mm": 0.0,
+              "theta": 0.1,
+              "deficit_ratio": 1.0,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 0.0,
+              "drainage_mm": 0.0,
+              "balance_residual_mm": 0.0
+            }
+          ]
+        }
+      ]
+    },
+    "初始缺水量比例": {
+      "used_m3": 3000,
+      "unused_m3": 0,
+      "loss": 30.059885531135535,
+      "units": [
+        {
+          "id": "A",
+          "name": "假设湿草地A",
+          "supply_m3": 1700,
+          "loss": 11.217980769230772,
+          "days_below_threshold": 6,
+          "trajectory": [
+            {
+              "date": "2025-06-01",
+              "storage_mm": 55.891999999999996,
+              "theta": 0.23973,
+              "deficit_ratio": 0.0,
+              "irrigation_mm": 27.2,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 2.8080000000000003,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-02",
+              "storage_mm": 50.361,
+              "theta": 0.2259025,
+              "deficit_ratio": 0.03151923076923083,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 5.031,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-03",
+              "storage_mm": 43.452999999999996,
+              "theta": 0.2086325,
+              "deficit_ratio": 0.1643653846153847,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 6.408,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-04",
+              "storage_mm": 36.022999999999996,
+              "theta": 0.1900575,
+              "deficit_ratio": 0.3072500000000001,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 6.930000000000001,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-05",
+              "storage_mm": 28.259999999999994,
+              "theta": 0.17065,
+              "deficit_ratio": 0.45653846153846167,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 7.263000000000001,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-06",
+              "storage_mm": 21.369999999999994,
+              "theta": 0.15342499999999998,
+              "deficit_ratio": 0.5890384615384616,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 6.39,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-07",
+              "storage_mm": 15.865999999999993,
+              "theta": 0.13966499999999998,
+              "deficit_ratio": 0.6948846153846155,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 5.004,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            }
+          ]
+        },
+        {
+          "id": "B",
+          "name": "假设湿草地B",
+          "supply_m3": 0,
+          "loss": 12.189333333333337,
+          "days_below_threshold": 5,
+          "trajectory": [
+            {
+              "date": "2025-06-01",
+              "storage_mm": 71.38,
+              "theta": 0.24276,
+              "deficit_ratio": 0.0,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 3.12,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-02",
+              "storage_mm": 65.28999999999999,
+              "theta": 0.23057999999999998,
+              "deficit_ratio": 0.0,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 5.59,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-03",
+              "storage_mm": 57.669999999999995,
+              "theta": 0.21533999999999998,
+              "deficit_ratio": 0.03883333333333342,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 7.12,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-04",
+              "storage_mm": 49.46999999999999,
+              "theta": 0.19894,
+              "deficit_ratio": 0.17550000000000013,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 7.7,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-05",
+              "storage_mm": 40.89999999999999,
+              "theta": 0.1818,
+              "deficit_ratio": 0.31833333333333347,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 8.07,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-06",
+              "storage_mm": 33.29999999999999,
+              "theta": 0.16659999999999997,
+              "deficit_ratio": 0.4450000000000002,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 7.1,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-07",
+              "storage_mm": 27.23999999999999,
+              "theta": 0.15447999999999998,
+              "deficit_ratio": 0.546,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 5.56,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            }
+          ]
+        },
+        {
+          "id": "C",
+          "name": "假设湿草地C",
+          "supply_m3": 1300,
+          "loss": 6.652571428571427,
+          "days_below_threshold": 5,
+          "trajectory": [
+            {
+              "date": "2025-06-01",
+              "storage_mm": 47.504,
+              "theta": 0.25834666666666667,
+              "deficit_ratio": 0.0,
+              "irrigation_mm": 32.5,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 2.4960000000000004,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-02",
+              "storage_mm": 42.532,
+              "theta": 0.24177333333333334,
+              "deficit_ratio": 0.0,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 4.472,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-03",
+              "storage_mm": 36.336,
+              "theta": 0.22111999999999998,
+              "deficit_ratio": 0.13485714285714276,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 5.696000000000001,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-04",
+              "storage_mm": 29.676,
+              "theta": 0.19891999999999999,
+              "deficit_ratio": 0.29342857142857137,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 6.16,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-05",
+              "storage_mm": 22.72,
+              "theta": 0.17573333333333335,
+              "deficit_ratio": 0.459047619047619,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 6.456,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-06",
+              "storage_mm": 16.54,
+              "theta": 0.15513333333333335,
+              "deficit_ratio": 0.6061904761904762,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 5.68,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-07",
+              "storage_mm": 11.591999999999999,
+              "theta": 0.13863999999999999,
+              "deficit_ratio": 0.724,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 4.4479999999999995,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            }
+          ]
+        }
+      ]
+    },
+    "七天缺水指标优化": {
+      "used_m3": 3000,
+      "unused_m3": 0,
+      "loss": 30.059885531135535,
+      "units": [
+        {
+          "id": "A",
+          "name": "假设湿草地A",
+          "supply_m3": 1700,
+          "loss": 11.217980769230772,
+          "days_below_threshold": 6,
+          "trajectory": [
+            {
+              "date": "2025-06-01",
+              "storage_mm": 55.891999999999996,
+              "theta": 0.23973,
+              "deficit_ratio": 0.0,
+              "irrigation_mm": 27.2,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 2.8080000000000003,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-02",
+              "storage_mm": 50.361,
+              "theta": 0.2259025,
+              "deficit_ratio": 0.03151923076923083,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 5.031,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-03",
+              "storage_mm": 43.452999999999996,
+              "theta": 0.2086325,
+              "deficit_ratio": 0.1643653846153847,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 6.408,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-04",
+              "storage_mm": 36.022999999999996,
+              "theta": 0.1900575,
+              "deficit_ratio": 0.3072500000000001,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 6.930000000000001,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-05",
+              "storage_mm": 28.259999999999994,
+              "theta": 0.17065,
+              "deficit_ratio": 0.45653846153846167,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 7.263000000000001,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-06",
+              "storage_mm": 21.369999999999994,
+              "theta": 0.15342499999999998,
+              "deficit_ratio": 0.5890384615384616,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 6.39,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-07",
+              "storage_mm": 15.865999999999993,
+              "theta": 0.13966499999999998,
+              "deficit_ratio": 0.6948846153846155,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 5.004,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            }
+          ]
+        },
+        {
+          "id": "B",
+          "name": "假设湿草地B",
+          "supply_m3": 0,
+          "loss": 12.189333333333337,
+          "days_below_threshold": 5,
+          "trajectory": [
+            {
+              "date": "2025-06-01",
+              "storage_mm": 71.38,
+              "theta": 0.24276,
+              "deficit_ratio": 0.0,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 3.12,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-02",
+              "storage_mm": 65.28999999999999,
+              "theta": 0.23057999999999998,
+              "deficit_ratio": 0.0,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 5.59,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-03",
+              "storage_mm": 57.669999999999995,
+              "theta": 0.21533999999999998,
+              "deficit_ratio": 0.03883333333333342,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 7.12,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-04",
+              "storage_mm": 49.46999999999999,
+              "theta": 0.19894,
+              "deficit_ratio": 0.17550000000000013,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 7.7,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-05",
+              "storage_mm": 40.89999999999999,
+              "theta": 0.1818,
+              "deficit_ratio": 0.31833333333333347,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 8.07,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-06",
+              "storage_mm": 33.29999999999999,
+              "theta": 0.16659999999999997,
+              "deficit_ratio": 0.4450000000000002,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 7.1,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-07",
+              "storage_mm": 27.23999999999999,
+              "theta": 0.15447999999999998,
+              "deficit_ratio": 0.546,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 5.56,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            }
+          ]
+        },
+        {
+          "id": "C",
+          "name": "假设湿草地C",
+          "supply_m3": 1300,
+          "loss": 6.652571428571427,
+          "days_below_threshold": 5,
+          "trajectory": [
+            {
+              "date": "2025-06-01",
+              "storage_mm": 47.504,
+              "theta": 0.25834666666666667,
+              "deficit_ratio": 0.0,
+              "irrigation_mm": 32.5,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 2.4960000000000004,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-02",
+              "storage_mm": 42.532,
+              "theta": 0.24177333333333334,
+              "deficit_ratio": 0.0,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 4.472,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-03",
+              "storage_mm": 36.336,
+              "theta": 0.22111999999999998,
+              "deficit_ratio": 0.13485714285714276,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 5.696000000000001,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-04",
+              "storage_mm": 29.676,
+              "theta": 0.19891999999999999,
+              "deficit_ratio": 0.29342857142857137,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 6.16,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-05",
+              "storage_mm": 22.72,
+              "theta": 0.17573333333333335,
+              "deficit_ratio": 0.459047619047619,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 6.456,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-06",
+              "storage_mm": 16.54,
+              "theta": 0.15513333333333335,
+              "deficit_ratio": 0.6061904761904762,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 5.68,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            },
+            {
+              "date": "2025-06-07",
+              "storage_mm": 11.591999999999999,
+              "theta": 0.13863999999999999,
+              "deficit_ratio": 0.724,
+              "irrigation_mm": 0.0,
+              "effective_rain_mm": 0.0,
+              "overflow_mm": 0,
+              "actual_et_mm": 4.4479999999999995,
+              "drainage_mm": 0.5,
+              "balance_residual_mm": 0.0
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

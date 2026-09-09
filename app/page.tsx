@@ -1,5 +1,5 @@
-import { ResiliencePlatform } from './resilience-platform';
+import { WetlandPlatform } from './wetland-platform';
 
 export default function Home() {
-  return <ResiliencePlatform />;
+  return <WetlandPlatform />;
 }
