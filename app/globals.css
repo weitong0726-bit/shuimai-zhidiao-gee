@@ -20,19 +20,31 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible { 
 .header-status { justify-self:end; color:#b9d1cb; font-size:11px; }
 .status-dot { display:inline-block; width:7px; height:7px; margin-right:8px; border-radius:50%; background:#71d5a8; box-shadow:0 0 0 4px rgba(113,213,168,.12); }
 
-.hero { min-height:360px; padding:54px max(30px,calc((100vw - 1450px)/2)); display:grid; grid-template-columns:1.23fr .77fr; gap:70px; align-items:end; background:radial-gradient(circle at 80% 20%,rgba(74,132,112,.13),transparent 32%),linear-gradient(120deg,#faf9f4 0%,#ece8d8 100%); border-bottom:1px solid var(--line); }
+.hero { min-height:500px; padding:46px max(30px,calc((100vw - 1450px)/2)); display:grid; grid-template-columns:minmax(360px,.9fr) minmax(520px,1.1fr); gap:64px; align-items:center; background:radial-gradient(circle at 80% 20%,rgba(74,132,112,.13),transparent 32%),linear-gradient(120deg,#faf9f4 0%,#ece8d8 100%); border-bottom:1px solid var(--line); }
 .kicker { display:block; color:#4f756d; font-size:10px; font-weight:700; letter-spacing:.13em; text-transform:uppercase; }
-.hero h1 { margin:13px 0 0; font:700 clamp(37px,4.3vw,64px)/1.14 'SimSun','Songti SC',serif; letter-spacing:-.045em; }
-.hero p { max-width:720px; margin:17px 0 0; color:#5f706b; font-size:14px; line-height:1.9; }
-.hero-actions { display:flex; gap:18px; align-items:center; margin-top:27px; }
-.primary-action,.text-action { display:inline-flex; align-items:center; gap:9px; text-decoration:none; font-size:12px; font-weight:700; }
-.primary-action { padding:12px 17px; color:white; background:var(--green-2); border-radius:5px; } .primary-action:hover { background:#15564c; }
-.text-action { color:#536b64; border-bottom:1px solid #8b9c97; padding:5px 0; }
-.hero-facts { display:grid; grid-template-columns:repeat(2,1fr); background:rgba(255,255,255,.57); border:1px solid var(--line); }
-.hero-facts>div { min-height:94px; padding:17px 18px; border-right:1px solid var(--line); border-bottom:1px solid var(--line); }
-.hero-facts>div:nth-child(2n) { border-right:0; } .hero-facts>div:nth-last-child(-n+2) { border-bottom:0; }
-.hero-facts strong,.hero-facts span { display:block; } .hero-facts strong { font:700 21px/1.2 ui-monospace,SFMono-Regular,Consolas,monospace; }
-.hero-facts strong small { font-size:10px; font-weight:600; } .hero-facts span { margin-top:8px; color:#6f7c78; font-size:10px; }
+.hero h1 { margin:13px 0 0; font:700 clamp(38px,4.1vw,60px)/1.12 'SimSun','Songti SC',serif; letter-spacing:-.045em; }
+.hero p { max-width:620px; margin:17px 0 0; color:#5f706b; font-size:16px; line-height:1.8; }
+.scope-confirmation { display:flex; align-items:center; gap:11px; margin-top:25px; padding:14px 16px; color:#295e52; background:rgba(255,255,255,.58); border-left:3px solid #2b7868; }
+.scope-confirmation svg { flex:0 0 auto; } .scope-confirmation span,.scope-confirmation b { display:block; }
+.scope-confirmation span { font-size:13px; line-height:1.55; } .scope-confirmation b { margin-bottom:2px; color:#173f36; font-size:14px; }
+.entry-gateway { padding:22px; background:rgba(255,254,249,.86); border:1px solid #c8c3b4; box-shadow:0 18px 45px rgba(37,59,52,.11); }
+.entry-heading { display:flex; justify-content:space-between; align-items:end; gap:20px; padding:0 2px 15px; border-bottom:1px solid #d7d2c5; }
+.entry-heading span { font:700 19px 'SimSun','Songti SC',serif; } .entry-heading small { color:#687a74; font-size:12px; }
+.entry-choice { width:100%; min-height:112px; display:grid; grid-template-columns:48px minmax(0,1fr) 22px; gap:15px; align-items:center; margin-top:12px; padding:17px; color:#24453e; background:white; border:1px solid #d5d1c4; border-radius:7px; text-align:left; transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease; }
+.entry-choice:hover { transform:translateY(-2px); border-color:#8eaa9f; box-shadow:0 10px 24px rgba(35,71,61,.09); }
+.entry-choice.selected { border-color:#207362; box-shadow:0 0 0 3px rgba(32,115,98,.12); }
+.entry-choice.real.selected { border-color:#b98024; box-shadow:0 0 0 3px rgba(185,128,36,.12); }
+.entry-icon { width:48px; height:48px; display:grid; place-items:center; color:white; background:#1d6d60; border-radius:50%; }
+.entry-choice.real .entry-icon { color:#22473e; background:#e7b54e; }
+.entry-copy b,.entry-copy small,.entry-copy em { display:block; } .entry-copy b { font-size:16px; }
+.entry-copy small { margin-top:5px; color:#65766f; font-size:13px; line-height:1.5; }
+.entry-copy em { margin-top:8px; color:#277263; font-size:12px; font-style:normal; font-weight:700; }
+.entry-choice.real .entry-copy em { color:#9a6518; }
+.entry-download { width:max-content; display:flex; align-items:center; gap:7px; margin:14px auto 0; color:#5d716a; font-size:12px; text-decoration:none; border-bottom:1px solid #87958f; padding-bottom:3px; }
+.quick-guide { min-height:70px; display:flex; justify-content:center; align-items:center; gap:17px; padding:10px 28px; color:#577068; background:#e7e4d8; border-bottom:1px solid var(--line); }
+.quick-guide>span { margin-right:8px; color:#263f39; font-size:14px; font-weight:700; }
+.quick-guide>div { display:flex; align-items:center; gap:7px; } .quick-guide b { color:#a36e1b; font:700 13px ui-monospace,monospace; }
+.quick-guide em { color:#536963; font-size:13px; font-style:normal; }
 
 .workspace-shell { width:100%; min-height:705px; display:grid; grid-template-columns:250px minmax(510px,1fr) 300px; color:white; background:#0c2925; border-bottom:1px solid #081f1c; }
 .layer-sidebar,.unit-sidebar { min-width:0; padding:17px 15px; background:#143832; } .layer-sidebar { border-right:1px solid rgba(255,255,255,.1); } .unit-sidebar { border-left:1px solid rgba(255,255,255,.1); }
@@ -131,9 +143,14 @@ footer>div { display:flex; align-items:center; gap:8px; color:#315c53; font-size
   .unit-sidebar .panel-title { grid-column:1/-1; } .unit-tabs { align-self:start; } .unit-heading { padding:0; } .verification-state { align-self:start; }
   .decision-grid { grid-template-columns:280px 1fr; } .explain-card { grid-column:1/-1; }
 }
+@media (max-width:1000px) {
+  .hero { grid-template-columns:1fr; gap:32px; }
+  .hero-intro { max-width:720px; }
+}
 @media (max-width:850px) {
   .site-header { padding:0 16px; grid-template-columns:1fr auto; } .site-header nav { display:none; } .brand small { display:none; }
-  .hero { grid-template-columns:1fr; gap:35px; padding:42px 20px; } .workspace-shell { display:block; } .layer-sidebar { border-right:0; }
+  .hero { grid-template-columns:1fr; gap:28px; padding:36px 20px; } .workspace-shell { display:block; } .layer-sidebar { border-right:0; }
+  .quick-guide { flex-wrap:wrap; justify-content:flex-start; gap:10px 14px; }
   .layer-list { display:grid; grid-template-columns:repeat(2,1fr); } .map-canvas { min-height:480px; } .unit-sidebar { display:block; }
   .decision-grid { grid-template-columns:1fr; } .explain-card { grid-column:auto; } .prescription-card { grid-template-columns:1fr; padding-bottom:60px; }
   .prescription-units { grid-template-columns:1fr; } .evidence-flow { grid-template-columns:1fr 1fr; } .evidence-flow article { border-bottom:1px solid rgba(255,255,255,.14); }
@@ -141,8 +158,9 @@ footer>div { display:flex; align-items:center; gap:8px; color:#315c53; font-size
   footer { align-items:flex-start; flex-direction:column; gap:8px; padding-top:20px; padding-bottom:20px; }
 }
 @media (max-width:540px) {
-  .header-status { font-size:8px; } .hero-facts { grid-template-columns:1fr; } .hero-facts>div { border-right:0; }
-  .hero-facts>div:nth-last-child(-n+2) { border-bottom:1px solid var(--line); } .hero-facts>div:last-child { border-bottom:0; }
+  .header-status { font-size:8px; } .entry-gateway { padding:16px; } .entry-heading { align-items:flex-start; flex-direction:column; gap:4px; }
+  .entry-choice { grid-template-columns:42px minmax(0,1fr); padding:14px; } .entry-choice>svg { display:none; } .entry-icon { width:42px; height:42px; }
+  .quick-guide>svg { display:none; } .quick-guide>span { width:100%; }
   .layer-list { grid-template-columns:1fr; } .map-pin { display:none; } .pending-layer { grid-template-columns:24px 1fr; } .pending-layer a { grid-column:1/-1; text-align:center; }
   .map-footer { flex-wrap:wrap; padding:8px 12px; } .map-footer strong { width:100%; margin-left:0; }
   .outcome-strip,.prescription-units,.evidence-flow { grid-template-columns:1fr; } .outcome-strip>div { border-right:0; border-bottom:1px solid #d7d3c7; }

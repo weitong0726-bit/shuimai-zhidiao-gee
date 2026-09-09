@@ -5,7 +5,6 @@ import Image from 'next/image';
 import {
   Activity,
   AlertTriangle,
-  ArrowDown,
   ArrowRight,
   BarChart3,
   BrainCircuit,
@@ -99,6 +98,7 @@ function fmt(value: number, digits = 2) {
 }
 
 export function WetlandPlatform() {
+  const [entryMode, setEntryMode] = useState<'demo' | 'real' | null>(null);
   const [activeLayer, setActiveLayer] = useState<LayerKey>('scope');
   const [unit, setUnit] = useState<'H1' | 'H2'>('H1');
   const [windowStart, setWindowStart] = useState('2025-06-01');
@@ -146,6 +146,21 @@ export function WetlandPlatform() {
     }
   }
 
+  function startPath(mode: 'demo' | 'real') {
+    setEntryMode(mode);
+    if (mode === 'demo') {
+      setWindowStart('2025-06-01');
+      setBudget(3000);
+      setKc(1);
+    } else {
+      setActiveLayer('scope');
+      setUnit('H1');
+    }
+    window.setTimeout(() => {
+      document.getElementById(mode === 'demo' ? 'scenario' : 'workspace')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 120);
+  }
+
   return (
     <main className="shuimai-shell">
       <header className="site-header">
@@ -154,6 +169,7 @@ export function WetlandPlatform() {
           <span><strong>水脉智调</strong><small>SHUIMAI ECO-WATER DECISION</small></span>
         </a>
         <nav aria-label="主导航">
+          <a href="#top">开始使用</a>
           <a href="#workspace">研究区</a>
           <a href="#scenario">情景推演</a>
           <a href="#imagery">GEE 数据</a>
@@ -163,21 +179,37 @@ export function WetlandPlatform() {
       </header>
 
       <section id="top" className="hero">
-        <div>
-          <span className="kicker">面向黄河流域气候韧性的湿地生态补水智能决策系统</span>
-          <h1>把有限的生态水，<br />补到最需要的地方。</h1>
-          <p>围绕“哪里缺水、何时补水、补多少”的真实决策链，将公开气象、GEE 遥感观测、根区水量平衡和离散动态规划接成可复核的 7 天补水处方。</p>
-          <div className="hero-actions">
-            <a className="primary-action" href="#workspace">进入决策工作台 <ArrowDown size={15} /></a>
-            <a className="text-action" href="/wetland-data/demo.json" download>下载可复现实验数据 <Download size={14} /></a>
+        <div className="hero-intro">
+          <span className="kicker">第一步 · 确认研究区，再选择使用方式</span>
+          <h1>欢迎进入<br />水脉智调。</h1>
+          <p>当前研究范围为郑州沿黄滩区—惠济候选范围，H1、H2 是两个待核查的遥感窗口。你可以直接体验已有情景，也可以从真实 GEE 数据开始分析。</p>
+          <div className="scope-confirmation">
+            <CheckCircle2 size={18} />
+            <span><b>研究区已准备</b>郑州滩区候选交集 140.01 km² · H1/H2 各约 1 km²</span>
           </div>
         </div>
-        <div className="hero-facts" aria-label="项目关键事实">
-          <Fact value="140.01" unit="km²" label="郑州滩区候选交集" />
-          <Fact value="H1 / H2" unit="" label="两个 1 km² 核查窗口" />
-          <Fact value="72" unit="情景" label="4 窗口 × 6 水量 × 3 Kc" />
-          <Fact value="288" unit="结果" label="四种策略完整对照" />
+        <div className="entry-gateway" aria-label="选择使用方式">
+          <div className="entry-heading"><span>接下来你想做什么？</span><small>首次访问建议先体验示范决策</small></div>
+          <button className={`entry-choice demo ${entryMode === 'demo' ? 'selected' : ''}`} aria-pressed={entryMode === 'demo'} onClick={() => startPath('demo')}>
+            <span className="entry-icon"><FlaskConical size={22} /></span>
+            <span className="entry-copy"><b>体验示范决策</b><small>不需要登录 GEE，直接调整水量并查看策略与处方。</small><em>选择窗口 → 设置预算 → 查看处方</em></span>
+            <ArrowRight size={19} />
+          </button>
+          <button className={`entry-choice real ${entryMode === 'real' ? 'selected' : ''}`} aria-pressed={entryMode === 'real'} onClick={() => startPath('real')}>
+            <span className="entry-icon"><Satellite size={22} /></span>
+            <span className="entry-copy"><b>创建真实分析</b><small>从 H1/H2 核查开始，在 GEE 运行脚本并导入结果。</small><em>选择区域 → 运行 GEE → 导入数据</em></span>
+            <ArrowRight size={19} />
+          </button>
+          <a className="entry-download" href="/wetland-data/demo.json" download><Download size={14} />下载可复现实验数据</a>
         </div>
+      </section>
+
+      <section className="quick-guide" aria-label="使用流程">
+        <span>使用流程</span>
+        <div><b>01</b><em>确认研究区</em></div><ArrowRight size={14} />
+        <div><b>02</b><em>选择示范或真实分析</em></div><ArrowRight size={14} />
+        <div><b>03</b><em>运行诊断与优化</em></div><ArrowRight size={14} />
+        <div><b>04</b><em>查看七天补水处方</em></div>
       </section>
 
       <section id="workspace" className="workspace-shell">
@@ -339,10 +371,6 @@ export function WetlandPlatform() {
       <footer><div><Droplets size={18} /><span><b>水脉智调</b> · 湿地生态补水智能决策系统</span></div><p>技术原型 · 数据与模型边界均在页面中明示 · © 2026 水脉智调团队</p></footer>
     </main>
   );
-}
-
-function Fact({ value, unit, label }: { value: string; unit: string; label: string }) {
-  return <div><strong>{value} <small>{unit}</small></strong><span>{label}</span></div>;
 }
 
 function PanelTitle({ icon, title, meta }: { icon: React.ReactNode; title: string; meta: string }) {
