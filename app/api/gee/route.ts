@@ -14,6 +14,8 @@ type EeApi = {
   reset?: () => void;
   data: { setAuthToken: (...args: unknown[]) => void };
   initialize: (...args: unknown[]) => void;
+  Geometry: (value: unknown) => EeObject;
+  Feature: (geometry: EeObject, properties?: Record<string, unknown>) => EeObject;
   FeatureCollection: (value: unknown) => EeObject;
   ImageCollection: (assetId: string) => EeObject;
   Filter: { lt: (property: string, value: number) => unknown };
@@ -130,10 +132,11 @@ function getThumbUrl(image: EeObject, params: Record<string, unknown>) {
 function validateRequest(payload: unknown) {
   if (!payload || typeof payload !== 'object') throw new Error('请求内容无效。');
   const input = payload as { boundary?: unknown; start?: unknown; end?: unknown; index?: unknown };
-  const boundary = input.boundary as { type?: unknown; features?: unknown[] };
+  const boundary = input.boundary as { type?: unknown; features?: Array<{ geometry?: unknown; properties?: Record<string, unknown> }> };
   if (boundary?.type !== 'FeatureCollection' || !Array.isArray(boundary.features) || boundary.features.length < 1 || boundary.features.length > 100) {
     throw new Error('研究区必须包含1—100个面要素。');
   }
+  const features = boundary.features;
   const text = JSON.stringify(boundary);
   if (text.length > 1_500_000) throw new Error('研究区边界过于复杂，请先简化边界。');
   const start = typeof input.start === 'string' ? input.start : '';
@@ -143,7 +146,7 @@ function validateRequest(payload: unknown) {
   const days = (Date.parse(end) - Date.parse(start)) / 86_400_000;
   if (days > 366) throw new Error('单次分析时间范围不能超过366天。');
   if (!['RGB', 'NDVI', 'NDMI', 'MNDWI'].includes(index)) throw new Error('分析指标无效。');
-  return { boundary, start, end, index };
+  return { boundary: { type: 'FeatureCollection' as const, features }, start, end, index };
 }
 
 function checkRateLimit(request: Request) {
@@ -183,7 +186,9 @@ export async function POST(request: Request) {
     checkRateLimit(request);
     const { boundary, start, end, index } = validateRequest(await request.json());
     await initializeGee();
-    const units = ee.FeatureCollection(boundary);
+    const units = ee.FeatureCollection(boundary.features.map((feature) =>
+      ee.Feature(ee.Geometry(feature.geometry), feature.properties || {}),
+    ));
     const region = units.geometry();
     const collection = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
       .filterBounds(region)
