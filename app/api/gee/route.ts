@@ -190,12 +190,15 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  let stage = 'request';
   try {
     const contentLength = Number(request.headers.get('content-length') || 0);
     if (contentLength > 2_000_000) return Response.json({ error: '研究区文件过大。' }, { status: 413 });
     checkRateLimit(request);
     const { boundary, start, end, index } = validateRequest(await request.json());
+    stage = 'initialize';
     await initializeGee();
+    stage = 'geometry';
     const units = ee.FeatureCollection(boundary.features.map((feature) =>
       ee.Feature(geeGeometry(feature.geometry), feature.properties || {}),
     ));
@@ -204,6 +207,7 @@ export async function POST(request: Request) {
       .filterBounds(region)
       .filterDate(start, end)
       .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 60));
+    stage = 'scene-count';
     const sceneCount = await evaluate<number>(collection.size());
     if (!sceneCount) throw new Error('所选时段没有满足条件的Sentinel-2影像，请扩大日期范围。');
     const composite = collection.median().clip(region);
@@ -219,9 +223,11 @@ export async function POST(request: Request) {
       image = composite.normalizedDifference(['B3', 'B11']).rename('MNDWI');
       visualization = { min: -0.6, max: 0.7, palette: ['a6611a', 'f5f5f5', '4393c3', '053061'] };
     }
+    stage = 'thumbnail';
     const imageUrl = await getThumbUrl(image, { ...visualization, region, dimensions: '1000x700', format: 'png' });
     let mean: number | null = null;
     if (index !== 'RGB') {
+      stage = 'statistics';
       const stats = await evaluate<Record<string, unknown>>(image.reduceRegion({
         reducer: ee.Reducer.mean(), geometry: region, scale: 20, bestEffort: true, maxPixels: 1e9,
       }));
@@ -229,6 +235,8 @@ export async function POST(request: Request) {
     }
     return Response.json({ imageUrl, index, sceneCount, mean, generatedAt: new Date().toISOString() });
   } catch (error) {
+    const diagnostic = error instanceof Error ? error.message : String(error);
+    console.error(`[GEE:${stage}] ${diagnostic.slice(0, 1200)}`);
     const [message, status] = publicError(error);
     return Response.json({ error: message }, { status });
   }
