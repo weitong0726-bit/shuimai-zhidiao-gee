@@ -14,7 +14,10 @@ type EeApi = {
   reset?: () => void;
   data: { setAuthToken: (...args: unknown[]) => void };
   initialize: (...args: unknown[]) => void;
-  Geometry: (value: unknown) => EeObject;
+  Geometry: {
+    Polygon: (coordinates: unknown) => EeObject;
+    MultiPolygon: (coordinates: unknown) => EeObject;
+  };
   Feature: (geometry: EeObject, properties?: Record<string, unknown>) => EeObject;
   FeatureCollection: (value: unknown) => EeObject;
   ImageCollection: (assetId: string) => EeObject;
@@ -161,6 +164,13 @@ function checkRateLimit(request: Request) {
   existing.count += 1;
 }
 
+function geeGeometry(value: unknown) {
+  const geometry = value as { type?: unknown; coordinates?: unknown };
+  if (geometry?.type === 'Polygon') return ee.Geometry.Polygon(geometry.coordinates);
+  if (geometry?.type === 'MultiPolygon') return ee.Geometry.MultiPolygon(geometry.coordinates);
+  throw new Error('研究区只能包含Polygon或MultiPolygon面要素。');
+}
+
 function publicError(error: unknown) {
   const message = error instanceof Error ? error.message : String(error);
   if (message.includes('GEE_SERVER_NOT_CONFIGURED')) return ['网站的GEE服务账号尚未配置。', 503] as const;
@@ -187,7 +197,7 @@ export async function POST(request: Request) {
     const { boundary, start, end, index } = validateRequest(await request.json());
     await initializeGee();
     const units = ee.FeatureCollection(boundary.features.map((feature) =>
-      ee.Feature(ee.Geometry(feature.geometry), feature.properties || {}),
+      ee.Feature(geeGeometry(feature.geometry), feature.properties || {}),
     ));
     const region = units.geometry();
     const collection = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
