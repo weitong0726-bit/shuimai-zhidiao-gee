@@ -1,5 +1,5 @@
-import { WetlandPlatform } from './wetland-platform';
+import { CustomAreaWorkspace } from './custom-area-workspace';
 
 export default function Home() {
-  return <WetlandPlatform />;
+  return <CustomAreaWorkspace />;
 }

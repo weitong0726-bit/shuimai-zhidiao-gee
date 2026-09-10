@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: '水脉智调｜湿地生态补水智能决策系统',
-  description: '支持自定义Shapefile或GeoJSON研究区的湿地遥感诊断与生态补水智能决策系统。',
+  title: '水脉智调｜研究区边界导入',
+  description: '在浏览器中导入Shapefile ZIP或GeoJSON，预览研究区边界并生成对应的Google Earth Engine分析脚本。',
 };
 
 export default function RootLayout({

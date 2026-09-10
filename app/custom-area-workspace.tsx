@@ -203,11 +203,15 @@ export function CustomAreaWorkspace() {
   }
 
   return (
-    <section id="custom-area" className="bg-[#edf0e9] py-16 lg:py-20">
+    <section id="custom-area" className="min-h-screen bg-[#edf0e9] py-8 lg:py-12">
       <div className="mx-auto max-w-7xl px-5 lg:px-8">
+        <header className="mb-9 flex flex-wrap items-center justify-between gap-4 border-b border-[#c8c4b8] pb-5">
+          <div className="flex items-center gap-3"><span className="grid size-10 place-items-center rounded-lg bg-[#d9aa45] text-[#17332f]"><MapPinned className="size-5"/></span><div><strong className="block text-base tracking-[.16em] text-[#173d38]">水脉智调</strong><span className="mt-1 block text-xs text-[#65766f]">研究区边界导入工具</span></div></div>
+          <span className="rounded-full border border-[#a8beb7] bg-white/60 px-3 py-1.5 text-xs text-[#45675f]">所有文件仅在当前浏览器处理</span>
+        </header>
         <div className="grid gap-5 lg:grid-cols-[1fr_.78fr] lg:items-end">
-          <div><div className="mb-3 flex items-center gap-2 text-xs font-medium tracking-[.16em] text-[#9b6a12]"><span className="h-px w-8 bg-current"/>01 / 通用研究区</div><h2 className="max-w-3xl text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">导入你自己的面状研究区</h2></div>
-          <p className="max-w-xl text-sm leading-7 text-[#5c6b67]">支持GeoJSON，或包含.shp、.shx、.dbf、.prj的ZIP压缩包。边界在浏览器本地解析，系统会生成带有你研究区坐标的GEE脚本。</p>
+          <div><div className="mb-3 flex items-center gap-2 text-xs font-medium tracking-[.16em] text-[#9b6a12]"><span className="h-px w-8 bg-current"/>START HERE</div><h1 className="max-w-3xl text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">导入你自己的面状研究区</h1></div>
+          <p className="max-w-xl text-sm leading-7 text-[#5c6b67]">上传GeoJSON，或包含.shp、.shx、.dbf、.prj的ZIP压缩包。系统将预览边界、检查坐标并生成带有该区域坐标的GEE脚本。</p>
         </div>
 
         <div className="mt-8 grid overflow-hidden rounded-xl border border-[#bdb7a9] bg-[#fffef9] shadow-sm lg:grid-cols-[360px_1fr]">
