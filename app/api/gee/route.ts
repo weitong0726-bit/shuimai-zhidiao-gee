@@ -23,11 +23,13 @@ type EeApi = {
   ImageCollection: (assetId: string) => EeObject;
   Filter: { lt: (property: string, value: number) => unknown };
   Reducer: { mean: () => unknown };
+  Serializer: { encodeCloudApi: (value: EeObject) => Record<string, unknown> };
 };
 
 const ee = earthEngineModule as EeApi;
 const requestBuckets = new Map<string, { count: number; resetAt: number }>();
-let initialization: Promise<void> | null = null;
+type GeeAuth = { token: string; projectId: string; expiresAt: number };
+let initialization: Promise<GeeAuth> | null = null;
 
 function readServiceAccount() {
   const raw = (env as unknown as RuntimeEnv).GEE_SERVICE_ACCOUNT_JSON;
@@ -91,6 +93,11 @@ async function serviceAccountToken(key: ServiceAccount) {
 }
 
 async function initializeGee() {
+  if (initialization) {
+    const cached = await initialization;
+    if (cached.expiresAt > Date.now() + 60_000) return cached;
+    initialization = null;
+  }
   if (!initialization) {
     initialization = (async () => {
       const key = readServiceAccount();
@@ -108,12 +115,17 @@ async function initializeGee() {
           true,
         );
       });
+      return {
+        token,
+        projectId: key.project_id,
+        expiresAt: Date.now() + Math.max(expiresIn - 60, 60) * 1000,
+      };
     })().catch((error) => {
       initialization = null;
       throw error;
     });
   }
-  await initialization;
+  return initialization;
 }
 
 function evaluate<T>(object: EeObject) {
@@ -122,14 +134,91 @@ function evaluate<T>(object: EeObject) {
   });
 }
 
-function getThumbUrl(image: EeObject, params: Record<string, unknown>) {
-  return new Promise<string>((resolve, reject) => {
-    image.getThumbURL(params, (url: unknown, error: unknown) => {
-      if (error) reject(error);
-      else if (typeof url === 'string' && url) resolve(url);
-      else reject(new Error('GEE_THUMBNAIL_FAILED'));
-    });
+function boundsOf(features: Array<{ geometry?: unknown }>) {
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  const walk = (value: unknown) => {
+    if (!Array.isArray(value)) return;
+    if (value.length >= 2 && typeof value[0] === 'number' && typeof value[1] === 'number') {
+      minX = Math.min(minX, value[0]);
+      minY = Math.min(minY, value[1]);
+      maxX = Math.max(maxX, value[0]);
+      maxY = Math.max(maxY, value[1]);
+      return;
+    }
+    value.forEach(walk);
+  };
+  features.forEach((feature) => walk((feature.geometry as { coordinates?: unknown })?.coordinates));
+  if (![minX, minY, maxX, maxY].every(Number.isFinite) || minX < -180 || maxX > 180 || minY < -90 || maxY > 90) {
+    throw new Error('研究区坐标必须是WGS84经纬度（EPSG:4326）。');
+  }
+  if (maxX <= minX || maxY <= minY) throw new Error('研究区边界范围无效。');
+  return { minX, minY, maxX, maxY };
+}
+
+function pixelGrid(bounds: ReturnType<typeof boundsOf>) {
+  const paddingX = Math.max((bounds.maxX - bounds.minX) * 0.025, 0.0001);
+  const paddingY = Math.max((bounds.maxY - bounds.minY) * 0.025, 0.0001);
+  const minX = bounds.minX - paddingX;
+  const maxX = bounds.maxX + paddingX;
+  const minY = bounds.minY - paddingY;
+  const maxY = bounds.maxY + paddingY;
+  const latitude = (minY + maxY) / 2;
+  const displayRatio = ((maxX - minX) * Math.max(Math.cos(latitude * Math.PI / 180), 0.15)) / (maxY - minY);
+  let width = 1000;
+  let height = Math.max(180, Math.round(width / displayRatio));
+  if (height > 700) {
+    height = 700;
+    width = Math.max(180, Math.round(height * displayRatio));
+  }
+  return {
+    dimensions: { width, height },
+    affineTransform: {
+      scaleX: (maxX - minX) / width,
+      shearX: 0,
+      translateX: minX,
+      shearY: 0,
+      scaleY: -(maxY - minY) / height,
+      translateY: maxY,
+    },
+    crsCode: 'EPSG:4326',
+  };
+}
+
+function pngDataUrl(bytes: ArrayBuffer) {
+  const data = new Uint8Array(bytes);
+  let binary = '';
+  for (let offset = 0; offset < data.length; offset += 0x8000) {
+    binary += String.fromCharCode(...data.subarray(offset, offset + 0x8000));
+  }
+  return `data:image/png;base64,${btoa(binary)}`;
+}
+
+async function computePng(
+  image: EeObject,
+  auth: GeeAuth,
+  grid: ReturnType<typeof pixelGrid>,
+  bandIds: string[],
+  visualizationOptions: Record<string, unknown>,
+) {
+  const response = await fetch(`https://earthengine.googleapis.com/v1/projects/${encodeURIComponent(auth.projectId)}/image:computePixels`, {
+    method: 'POST',
+    headers: { authorization: `Bearer ${auth.token}`, 'content-type': 'application/json' },
+    body: JSON.stringify({
+      expression: ee.Serializer.encodeCloudApi(image),
+      fileFormat: 'PNG',
+      grid,
+      bandIds,
+      visualizationOptions,
+    }),
   });
+  if (!response.ok) {
+    const detail = await response.text();
+    throw new Error(`GEE_COMPUTE_PIXELS_${response.status}: ${detail.slice(0, 1000)}`);
+  }
+  return pngDataUrl(await response.arrayBuffer());
 }
 
 function validateRequest(payload: unknown) {
@@ -197,7 +286,7 @@ export async function POST(request: Request) {
     checkRateLimit(request);
     const { boundary, start, end, index } = validateRequest(await request.json());
     stage = 'initialize';
-    await initializeGee();
+    const auth = await initializeGee();
     stage = 'geometry';
     const units = ee.FeatureCollection(boundary.features.map((feature) =>
       ee.Feature(geeGeometry(feature.geometry), feature.properties || {}),
@@ -212,19 +301,23 @@ export async function POST(request: Request) {
     if (!sceneCount) throw new Error('所选时段没有满足条件的Sentinel-2影像，请扩大日期范围。');
     const composite = collection.median().clip(region);
     let image = composite;
-    let visualization: Record<string, unknown> = { bands: ['B4', 'B3', 'B2'], min: 0, max: 3000, gamma: 1.15 };
+    let bandIds = ['B4', 'B3', 'B2'];
+    let visualizationOptions: Record<string, unknown> = { ranges: [{ min: 0, max: 3000 }], gamma: 1.15 };
     if (index === 'NDVI') {
       image = composite.normalizedDifference(['B8', 'B4']).rename('NDVI');
-      visualization = { min: -0.3, max: 0.85, palette: ['7f3b08', 'f6e8c3', '90c987', '075c37'] };
+      bandIds = ['NDVI'];
+      visualizationOptions = { ranges: [{ min: -0.3, max: 0.85 }], paletteColors: ['#7f3b08', '#f6e8c3', '#90c987', '#075c37'] };
     } else if (index === 'NDMI') {
       image = composite.normalizedDifference(['B8', 'B11']).rename('NDMI');
-      visualization = { min: -0.5, max: 0.65, palette: ['8c510a', 'f6e8c3', '80cdc1', '01665e'] };
+      bandIds = ['NDMI'];
+      visualizationOptions = { ranges: [{ min: -0.5, max: 0.65 }], paletteColors: ['#8c510a', '#f6e8c3', '#80cdc1', '#01665e'] };
     } else if (index === 'MNDWI') {
       image = composite.normalizedDifference(['B3', 'B11']).rename('MNDWI');
-      visualization = { min: -0.6, max: 0.7, palette: ['a6611a', 'f5f5f5', '4393c3', '053061'] };
+      bandIds = ['MNDWI'];
+      visualizationOptions = { ranges: [{ min: -0.6, max: 0.7 }], paletteColors: ['#a6611a', '#f5f5f5', '#4393c3', '#053061'] };
     }
-    stage = 'thumbnail';
-    const imageUrl = await getThumbUrl(image, { ...visualization, region, dimensions: '1000x700', format: 'png' });
+    stage = 'image';
+    const imageUrl = await computePng(image, auth, pixelGrid(boundsOf(boundary.features)), bandIds, visualizationOptions);
     let mean: number | null = null;
     if (index !== 'RGB') {
       stage = 'statistics';
