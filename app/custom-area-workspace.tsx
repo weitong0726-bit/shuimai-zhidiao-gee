@@ -1,21 +1,18 @@
 'use client';
 
-import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { ChangeEvent, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import {
   AlertCircle,
   CheckCircle2,
   CloudDownload,
   Cloudy,
-  Copy,
   FileArchive,
   FileJson,
-  KeyRound,
   LoaderCircle,
   MapPinned,
   Play,
   Satellite,
-  ShieldCheck,
   UploadCloud,
 } from 'lucide-react';
 
@@ -48,63 +45,16 @@ type GeeResult = {
   generatedAt: string;
 };
 
-type EarthEngineApi = {
-  reset?: () => void;
-  data: {
-    authenticateViaOauth: (...args: unknown[]) => void;
-    authenticateViaPopup: (...args: unknown[]) => void;
-  };
-  initialize: (...args: unknown[]) => void;
-  FeatureCollection: (value: unknown) => EarthEngineObject;
-  ImageCollection: (assetId: string) => EarthEngineObject;
-  Filter: { lt: (property: string, value: number) => unknown };
-  Reducer: { mean: () => unknown };
-};
-
-type EarthEngineObject = {
-  [key: string]: (...args: unknown[]) => EarthEngineObject;
-};
-
 const MAX_FILE_BYTES = 25 * 1024 * 1024;
-const PUBLIC_SITE_ORIGIN = 'https://shuimai-zhidiao.weitong0726.chatgpt.site';
-let earthEngineLoader: Promise<EarthEngineApi> | null = null;
-
-function loadEarthEngine() {
-  if (!earthEngineLoader) {
-    earthEngineLoader = import('@google/earthengine').then((module) => {
-      const candidate = (module as unknown as { default?: EarthEngineApi }).default;
-      return candidate ?? (module as unknown as EarthEngineApi);
-    });
-  }
-  return earthEngineLoader;
-}
 
 function geeErrorMessage(cause: unknown) {
   let message = '未知错误';
   if (cause instanceof Error) message = cause.message;
   else if (typeof cause === 'string') message = cause;
   else if (cause && typeof cause === 'object' && 'message' in cause && typeof cause.message === 'string') message = cause.message;
-  if (/origin|client|oauth|idpiframe/i.test(message)) return `OAuth配置不匹配：请把 ${window.location.origin} 加入该客户端ID的“已获授权的JavaScript来源”。`;
-  if (/popup|window|cancel|closed/i.test(message)) return '授权窗口被浏览器拦截或已关闭。请允许本站弹出窗口，然后再次点击“授权并连接GEE”。';
-  if (/403|permission|not registered|not authorized/i.test(message)) return '当前账号或项目没有Earth Engine权限。请确认该项目已启用Earth Engine API，并已完成Earth Engine注册。';
+  if (/403|permission|not registered|not authorized/i.test(message)) return '网站的GEE服务账号权限不足，请联系管理员检查Earth Engine角色和项目注册状态。';
   if (/429|quota/i.test(message)) return 'GEE请求额度暂时不足，请稍后再试或更换有额度的Cloud项目。';
   return `GEE请求失败：${message}`;
-}
-
-function evaluateGee<T>(object: EarthEngineObject) {
-  return new Promise<T>((resolve, reject) => {
-    object.evaluate((value: unknown, error: unknown) => error ? reject(error) : resolve(value as T));
-  });
-}
-
-function thumbUrl(image: EarthEngineObject, params: Record<string, unknown>) {
-  return new Promise<string>((resolve, reject) => {
-    image.getThumbURL(params, (url: unknown, error: unknown) => {
-      if (error) reject(error);
-      else if (typeof url === 'string' && url) resolve(url);
-      else reject(new Error('GEE没有返回影像地址。'));
-    });
-  });
 }
 
 function collectPositions(value: unknown, output: Position[]) {
@@ -234,20 +184,21 @@ export function CustomAreaWorkspace() {
   const [start, setStart] = useState('2025-06-01');
   const [end, setEnd] = useState('2025-07-01');
   const periodDays = 7;
-  const [projectId, setProjectId] = useState(() => typeof window === 'undefined' ? '' : window.localStorage.getItem('shuimai_gee_project') || '');
-  const [oauthClientId, setOauthClientId] = useState(() => typeof window === 'undefined' ? '' : window.localStorage.getItem('shuimai_gee_client') || '');
   const [geeIndex, setGeeIndex] = useState<GeeIndex>('NDMI');
-  const [geeConnected, setGeeConnected] = useState(false);
-  const [geeBusy, setGeeBusy] = useState<'connect' | 'analyse' | ''>('');
-  const [connectAttempted, setConnectAttempted] = useState(false);
-  const [geeConnectMessage, setGeeConnectMessage] = useState('');
+  const [geeServer, setGeeServer] = useState<'checking' | 'ready' | 'unavailable'>('checking');
+  const [geeBusy, setGeeBusy] = useState(false);
   const [geeAnalysisMessage, setGeeAnalysisMessage] = useState('');
   const [geeResult, setGeeResult] = useState<GeeResult | null>(null);
-  const eeRef = useRef<EarthEngineApi | null>(null);
   const paths = useMemo(() => summary ? geometryPaths(summary) : [], [summary]);
 
   useEffect(() => {
-    void loadEarthEngine();
+    let active = true;
+    fetch('/api/gee').then((response) => {
+      if (active) setGeeServer(response.ok ? 'ready' : 'unavailable');
+    }).catch(() => {
+      if (active) setGeeServer('unavailable');
+    });
+    return () => { active = false; };
   }, []);
 
   async function importBoundary(event: ChangeEvent<HTMLInputElement>) {
@@ -275,118 +226,45 @@ export function CustomAreaWorkspace() {
     }
   }
 
-  async function connectGee() {
-    setConnectAttempted(true);
-    if (!summary) {
-      setGeeConnectMessage('请先导入研究区边界。');
-      return;
-    }
-    if (!projectId.trim() || !oauthClientId.trim()) {
-      const missing = [!projectId.trim() ? 'Google Cloud项目ID' : '', !oauthClientId.trim() ? 'OAuth网页客户端ID' : ''].filter(Boolean).join('和');
-      setGeeConnectMessage(`还不能连接：请先填写${missing}。这两项为空时，网站无法向Google发起授权。`);
-      return;
-    }
-    setGeeBusy('connect');
-    setGeeConnectMessage('正在加载Google授权窗口，请在弹窗中选择已开通GEE的账号…');
-    setGeeAnalysisMessage('');
-    setGeeResult(null);
-    try {
-      const ee = await loadEarthEngine();
-      ee.reset?.();
-      await new Promise<void>((resolve, reject) => {
-        const timer = window.setTimeout(() => reject(new Error('授权窗口等待超时。')), 45000);
-        const finish = () => { window.clearTimeout(timer); resolve(); };
-        const fail = (cause: unknown) => { window.clearTimeout(timer); reject(cause); };
-        const initialize = () => ee.initialize(null, null, finish, fail, null, projectId.trim());
-        ee.data.authenticateViaOauth(
-          oauthClientId.trim(),
-          initialize,
-          fail,
-          ['https://www.googleapis.com/auth/earthengine.readonly'],
-          () => ee.data.authenticateViaPopup(initialize, fail),
-        );
-      });
-      eeRef.current = ee;
-      window.localStorage.setItem('shuimai_gee_project', projectId.trim());
-      window.localStorage.setItem('shuimai_gee_client', oauthClientId.trim());
-      setGeeConnected(true);
-      setGeeConnectMessage('GEE连接成功。现在可以进入第3步读取当前边界内的遥感数据。');
-    } catch (cause) {
-      setGeeConnected(false);
-      setGeeConnectMessage(geeErrorMessage(cause));
-    } finally {
-      setGeeBusy('');
-    }
-  }
-
   async function runGeeAnalysis() {
-    if (!summary || !eeRef.current || !geeConnected) {
-      setGeeAnalysisMessage('请先完成第2步的Google Earth Engine授权。');
+    if (!summary) {
+      setGeeAnalysisMessage('请先导入研究区边界。');
+      return;
+    }
+    if (geeServer !== 'ready') {
+      setGeeAnalysisMessage('GEE云端服务暂不可用，请稍后刷新页面。');
       return;
     }
     if (!start || !end || start >= end) {
       setGeeAnalysisMessage('结束日期必须晚于开始日期。');
       return;
     }
-    setGeeBusy('analyse');
+    setGeeBusy(true);
     setGeeAnalysisMessage('正在检索Sentinel-2并计算区域结果…');
     setGeeResult(null);
     try {
-      const ee = eeRef.current;
-      const units = ee.FeatureCollection(summary.collection);
-      const region = units.geometry();
-      const collection = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
-        .filterBounds(region)
-        .filterDate(start, end)
-        .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 60));
-      const sceneCount = await evaluateGee<number>(collection.size());
-      if (!sceneCount) throw new Error('所选时段没有满足条件的Sentinel-2影像，请扩大日期范围。');
-      const composite = collection.median().clip(region);
-      let image = composite;
-      let visualization: Record<string, unknown> = { bands: ['B4', 'B3', 'B2'], min: 0, max: 3000, gamma: 1.15 };
-      if (geeIndex === 'NDVI') {
-        image = composite.normalizedDifference(['B8', 'B4']).rename('NDVI');
-        visualization = { min: -0.3, max: 0.85, palette: ['7f3b08', 'f6e8c3', '90c987', '075c37'] };
-      } else if (geeIndex === 'NDMI') {
-        image = composite.normalizedDifference(['B8', 'B11']).rename('NDMI');
-        visualization = { min: -0.5, max: 0.65, palette: ['8c510a', 'f6e8c3', '80cdc1', '01665e'] };
-      } else if (geeIndex === 'MNDWI') {
-        image = composite.normalizedDifference(['B3', 'B11']).rename('MNDWI');
-        visualization = { min: -0.6, max: 0.7, palette: ['a6611a', 'f5f5f5', '4393c3', '053061'] };
-      }
-      const imageUrl = await thumbUrl(image, {
-        ...visualization,
-        region,
-        dimensions: '1000x700',
-        format: 'png',
+      const response = await fetch('/api/gee', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ boundary: summary.collection, start, end, index: geeIndex }),
       });
-      let mean: number | null = null;
-      if (geeIndex !== 'RGB') {
-        const stats = await evaluateGee<Record<string, unknown>>(image.reduceRegion({
-          reducer: ee.Reducer.mean(),
-          geometry: region,
-          scale: 20,
-          bestEffort: true,
-          maxPixels: 1e9,
-        }));
-        const value = stats[geeIndex];
-        mean = typeof value === 'number' ? value : null;
+      const payload = await response.json() as Partial<GeeResult> & { error?: string };
+      if (!response.ok || !payload.imageUrl || !payload.index || typeof payload.sceneCount !== 'number') {
+        throw new Error(payload.error || '服务器没有返回有效的GEE结果。');
       }
-      setGeeResult({ imageUrl, index: geeIndex, sceneCount, mean, generatedAt: new Date().toLocaleString('zh-CN') });
-      setGeeAnalysisMessage(`分析完成：共使用${sceneCount}景Sentinel-2影像。`);
+      const result: GeeResult = {
+        imageUrl: payload.imageUrl,
+        index: payload.index,
+        sceneCount: payload.sceneCount,
+        mean: typeof payload.mean === 'number' ? payload.mean : null,
+        generatedAt: payload.generatedAt ? new Date(payload.generatedAt).toLocaleString('zh-CN') : new Date().toLocaleString('zh-CN'),
+      };
+      setGeeResult(result);
+      setGeeAnalysisMessage(`分析完成：共使用${result.sceneCount}景Sentinel-2影像。`);
     } catch (cause) {
       setGeeAnalysisMessage(geeErrorMessage(cause));
     } finally {
-      setGeeBusy('');
-    }
-  }
-
-  async function copySiteOrigin() {
-    try {
-      await navigator.clipboard.writeText(PUBLIC_SITE_ORIGIN);
-      setGeeConnectMessage('网站来源已复制。请粘贴到OAuth客户端的“已获授权的JavaScript来源”。');
-    } catch {
-      setGeeConnectMessage(`请手动复制网站来源：${PUBLIC_SITE_ORIGIN}`);
+      setGeeBusy(false);
     }
   }
 
@@ -409,11 +287,11 @@ export function CustomAreaWorkspace() {
       <div className="mx-auto max-w-7xl px-5 lg:px-8">
         <header className="mb-9 flex flex-wrap items-center justify-between gap-4 border-b border-[#c8c4b8] pb-5">
           <div className="flex items-center gap-3"><span className="grid size-10 place-items-center rounded-lg bg-[#d9aa45] text-[#17332f]"><MapPinned className="size-5"/></span><div><strong className="block text-base tracking-[.16em] text-[#173d38]">水脉智调</strong><span className="mt-1 block text-xs text-[#65766f]">研究区边界导入工具</span></div></div>
-          <span className="rounded-full border border-[#a8beb7] bg-white/60 px-3 py-1.5 text-xs text-[#45675f]">所有文件仅在当前浏览器处理</span>
+          <span className="rounded-full border border-[#a8beb7] bg-white/60 px-3 py-1.5 text-xs text-[#45675f]">边界仅用于本次分析 · GEE密钥仅存服务器</span>
         </header>
         <div className="grid gap-5 lg:grid-cols-[1fr_.78fr] lg:items-end">
           <div><div className="mb-3 flex items-center gap-2 text-xs font-medium tracking-[.16em] text-[#9b6a12]"><span className="h-px w-8 bg-current"/>START HERE</div><h1 className="max-w-3xl text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">导入边界，直接读取GEE影像</h1></div>
-          <p className="max-w-xl text-sm leading-7 text-[#5c6b67]">上传自己的研究区，授权Google Earth Engine后，可在当前页面检索Sentinel-2并计算真彩色、NDVI、NDMI或MNDWI结果。</p>
+          <p className="max-w-xl text-sm leading-7 text-[#5c6b67]">上传自己的研究区即可由云端GEE服务检索Sentinel-2，并计算真彩色、NDVI、NDMI或MNDWI结果。访客无需Google账号。</p>
         </div>
 
         <div className="mt-8 grid overflow-hidden rounded-xl border border-[#bdb7a9] bg-[#fffef9] shadow-sm lg:grid-cols-[360px_1fr]">
@@ -427,8 +305,7 @@ export function CustomAreaWorkspace() {
             <p className="mt-3 text-xs leading-5 text-[#9ebbb4]">最多25MB、100个面要素。点和线文件不会进入分析。</p>
             <ol className="mt-6 space-y-3 border-t border-white/10 pt-5 text-xs leading-5 text-[#c7dad5]">
               <li className="flex gap-3"><span className="grid size-6 shrink-0 place-items-center rounded-full border border-[#d9aa45] text-[#edc86f]">1</span><span>上传并确认研究区边界</span></li>
-              <li className="flex gap-3"><span className="grid size-6 shrink-0 place-items-center rounded-full border border-white/25">2</span><span>用自己的Google账号连接GEE</span></li>
-              <li className="flex gap-3"><span className="grid size-6 shrink-0 place-items-center rounded-full border border-white/25">3</span><span>选择指标并读取区域影像</span></li>
+              <li className="flex gap-3"><span className="grid size-6 shrink-0 place-items-center rounded-full border border-white/25">2</span><span>选择指标并直接读取GEE影像</span></li>
             </ol>
             {error && <p role="alert" className="mt-4 flex gap-2 rounded-md bg-[#7a2f25]/40 p-3 text-xs leading-5 text-[#ffd5cc]"><AlertCircle className="mt-0.5 size-4 shrink-0"/>{error}</p>}
             {summary && <div className="mt-5 border-t border-white/10 pt-5"><p className="flex items-center gap-2 text-sm text-[#aee0ca]"><CheckCircle2 className="size-4"/>边界读取成功</p><dl className="mt-3 space-y-2 text-xs"><div className="flex justify-between gap-3"><dt className="text-[#9ebbb4]">文件</dt><dd className="max-w-48 truncate">{summary.fileName}</dd></div><div className="flex justify-between"><dt className="text-[#9ebbb4]">面要素</dt><dd>{summary.collection.features.length}个</dd></div><div className="flex justify-between"><dt className="text-[#9ebbb4]">估算面积</dt><dd>{summary.areaKm2.toFixed(2)} km²</dd></div><div className="flex justify-between"><dt className="text-[#9ebbb4]">建议投影</dt><dd>{summary.crs}</dd></div></dl></div>}
@@ -439,27 +316,15 @@ export function CustomAreaWorkspace() {
               <div className="flex flex-wrap items-start justify-between gap-4"><div><p className="text-xs text-[#687873]">第1步 · 自定义研究区已就绪</p><h3 className="mt-1 text-2xl font-semibold">边界预览</h3></div><button className="flex items-center gap-2 rounded-md border border-[#8eb8ab] px-3 py-2 text-sm font-medium text-[#205f52]" onClick={() => downloadText('shuimai_custom_area.geojson', JSON.stringify(summary.collection, null, 2), 'application/geo+json')}><FileJson className="size-4"/>下载标准化GeoJSON</button></div>
               <div className="mt-5 overflow-hidden rounded-lg border border-[#c8c4b8] bg-[#e8eee9]"><svg viewBox="0 0 800 450" className="h-auto max-h-[390px] w-full" aria-label="用户上传研究区边界预览"><title>用户上传研究区边界预览</title><defs><pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="#b9c9c2" strokeWidth="1"/></pattern></defs><rect width="800" height="450" fill="url(#grid)"/>{paths.map((path) => <path key={path.key} d={path.d} fill="#d8aa45" fillOpacity=".42" stroke="#155f52" strokeWidth="2" fillRule="evenodd"><title>{path.id}</title></path>)}</svg></div>
               <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4"><Mini label="中心经度" value={summary.centroid[0].toFixed(5)}/><Mini label="中心纬度" value={summary.centroid[1].toFixed(5)}/><Mini label="面要素" value={`${summary.collection.features.length}个`}/><Mini label="估算面积" value={`${summary.areaKm2.toFixed(2)} km²`}/></div>
-              <section className="mt-6 rounded-xl border border-[#9fb8b0] bg-[#eef6f2] p-5" aria-labelledby="gee-connect-title">
-                <div className="flex flex-wrap items-center justify-between gap-3"><div className="flex items-center gap-3"><span className="grid size-10 place-items-center rounded-lg bg-[#17685a] text-white"><KeyRound className="size-5"/></span><div><p className="text-xs text-[#5d7770]">第2步</p><h3 id="gee-connect-title" className="text-lg font-semibold">连接Google Earth Engine</h3></div></div>{geeConnected && <span className="flex items-center gap-2 rounded-full bg-[#d8eee4] px-3 py-1.5 text-xs font-semibold text-[#17614f]"><ShieldCheck className="size-4"/>已连接</span>}</div>
-                <div className="mt-4 rounded-lg border border-[#b8cec7] bg-white/70 p-4 text-sm leading-6 text-[#4f6962]"><strong className="text-[#17332f]">此按钮会进行真实Google授权，但必须先提供两项Google配置。</strong><br/>项目ID用于GEE计费与配额；OAuth网页客户端ID用于确认本站有权打开Google登录窗口。它们不是账号密码。</div>
-                <div className="mt-4 grid gap-4 md:grid-cols-2">
-                  <label className="text-sm font-medium">Google Cloud项目ID <span className="text-[#a33d2c]">*</span><input value={projectId} aria-invalid={connectAttempted && !projectId.trim()} onChange={(event) => { setProjectId(event.target.value); setGeeConnected(false); setGeeConnectMessage(''); }} placeholder="填写项目ID，不是项目名称" className={`mt-2 w-full rounded-md border bg-white px-3 py-2.5 text-sm ${connectAttempted && !projectId.trim() ? 'border-[#b94b3b] ring-2 ring-[#b94b3b]/15' : 'border-[#aebdb8]'}`}/><span className="mt-1.5 block text-xs font-normal text-[#667a74]">在Google Cloud顶部的项目选择器中查看。</span></label>
-                  <label className="text-sm font-medium">OAuth网页客户端ID <span className="text-[#a33d2c]">*</span><input value={oauthClientId} aria-invalid={connectAttempted && !oauthClientId.trim()} onChange={(event) => { setOauthClientId(event.target.value); setGeeConnected(false); setGeeConnectMessage(''); }} placeholder="xxxx.apps.googleusercontent.com" className={`mt-2 w-full rounded-md border bg-white px-3 py-2.5 text-sm ${connectAttempted && !oauthClientId.trim() ? 'border-[#b94b3b] ring-2 ring-[#b94b3b]/15' : 'border-[#aebdb8]'}`}/><span className="mt-1.5 block text-xs font-normal text-[#667a74]">应用类型必须选择“Web应用”。</span></label>
-                </div>
-                <div className="mt-4 flex flex-wrap items-center gap-3"><button onClick={connectGee} disabled={geeBusy !== ''} className="flex items-center gap-2 rounded-md bg-[#17685a] px-4 py-2.5 text-sm font-semibold text-white shadow-sm disabled:cursor-wait disabled:opacity-60">{geeBusy === 'connect' ? <LoaderCircle className="size-4 animate-spin"/> : <Satellite className="size-4"/>}{geeBusy === 'connect' ? '等待Google授权…' : geeConnected ? '重新授权并连接' : '授权并连接GEE'}</button><a className="text-xs font-medium text-[#28675c] underline underline-offset-4" href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noreferrer">创建OAuth客户端ID</a><a className="text-xs font-medium text-[#28675c] underline underline-offset-4" href="https://console.cloud.google.com/apis/library/earthengine.googleapis.com" target="_blank" rel="noreferrer">启用Earth Engine API</a></div>
-                <div className="mt-4 flex flex-wrap items-center gap-2 rounded-md bg-[#dfeae6] px-3 py-2.5 text-xs leading-5 text-[#4e6861]"><span>授权的JavaScript来源：</span><code className="break-all font-mono text-[#194f45]">{PUBLIC_SITE_ORIGIN}</code><button type="button" onClick={copySiteOrigin} className="ml-auto flex shrink-0 items-center gap-1 rounded border border-[#8daaa1] bg-white px-2 py-1 font-medium text-[#205f52]"><Copy className="size-3.5"/>复制</button></div>
-                <p className="mt-3 text-xs leading-5 text-[#657973]">连接时浏览器应弹出Google账号授权窗口。访问令牌只保存在当前会话，不会上传到本站服务器。</p>
-                {geeConnectMessage && <output className={`mt-4 block rounded-md border px-3 py-2.5 text-sm leading-6 ${geeConnected ? 'border-[#9fc8b8] bg-[#dceee7] text-[#1c5e50]' : 'border-[#dfaa9f] bg-[#f8dfd8] text-[#803426]'}`}>{geeConnectMessage}</output>}
-              </section>
-
-              <section className={`mt-5 rounded-xl border p-5 ${geeConnected ? 'border-[#c2b06f] bg-[#fffaf0]' : 'border-[#d2d0c7] bg-[#f6f5f1] opacity-70'}`} aria-labelledby="gee-analysis-title">
-                <div className="flex items-center gap-3"><span className="grid size-10 place-items-center rounded-lg bg-[#d9aa45] text-[#17332f]"><Cloudy className="size-5"/></span><div><p className="text-xs text-[#756c50]">第3步</p><h3 id="gee-analysis-title" className="text-lg font-semibold">读取研究区遥感结果</h3></div></div>
+              <section className="mt-6 rounded-xl border border-[#c2b06f] bg-[#fffaf0] p-5" aria-labelledby="gee-analysis-title">
+                <div className="flex flex-wrap items-center justify-between gap-3"><div className="flex items-center gap-3"><span className="grid size-10 place-items-center rounded-lg bg-[#d9aa45] text-[#17332f]"><Cloudy className="size-5"/></span><div><p className="text-xs text-[#756c50]">第2步</p><h3 id="gee-analysis-title" className="text-lg font-semibold">直接读取研究区遥感结果</h3></div></div><span className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold ${geeServer === 'ready' ? 'bg-[#d8eee4] text-[#17614f]' : geeServer === 'checking' ? 'bg-[#efe7d1] text-[#806222]' : 'bg-[#f4ddd8] text-[#8b382b]'}`}>{geeServer === 'checking' ? <LoaderCircle className="size-4 animate-spin"/> : <Satellite className="size-4"/>}{geeServer === 'ready' ? 'GEE云端已就绪' : geeServer === 'checking' ? '正在检查GEE服务' : 'GEE服务暂不可用'}</span></div>
+                <p className="mt-4 rounded-lg border border-[#dbc991] bg-white/70 p-3 text-sm leading-6 text-[#655a38]">无需登录Google账号。研究区将发送到网站服务器，由站点专用服务账号完成GEE计算；服务账号密钥不会传到浏览器。</p>
                 <div className="mt-4 grid gap-4 sm:grid-cols-3">
                   <label className="text-sm font-medium">开始日期<input type="date" value={start} onChange={(event) => setStart(event.target.value)} className="mt-2 w-full rounded-md border bg-white px-3 py-2.5 text-sm"/></label>
                   <label className="text-sm font-medium">结束日期<input type="date" value={end} onChange={(event) => setEnd(event.target.value)} className="mt-2 w-full rounded-md border bg-white px-3 py-2.5 text-sm"/></label>
                   <label className="text-sm font-medium">显示内容<select value={geeIndex} onChange={(event) => setGeeIndex(event.target.value as GeeIndex)} className="mt-2 w-full rounded-md border bg-white px-3 py-2.5 text-sm"><option value="RGB">Sentinel-2真彩色</option><option value="NDVI">NDVI植被活力</option><option value="NDMI">NDMI冠层含水</option><option value="MNDWI">MNDWI开放水体</option></select></label>
                 </div>
-                <div className="mt-4 flex flex-wrap items-center gap-3"><button onClick={runGeeAnalysis} disabled={!geeConnected || geeBusy !== '' || !start || !end || start >= end} className="flex items-center gap-2 rounded-md bg-[#9f7017] px-4 py-2.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50">{geeBusy === 'analyse' ? <LoaderCircle className="size-4 animate-spin"/> : <Play className="size-4"/>}开始真实分析</button><button onClick={downloadGeeScript} disabled={busy || !start || !end || start >= end} className="flex items-center gap-2 rounded-md border border-[#aa9d77] px-4 py-2.5 text-sm font-semibold text-[#63542d] disabled:opacity-50"><CloudDownload className="size-4"/>下载完整GEE脚本</button></div>
+                <div className="mt-4 flex flex-wrap items-center gap-3"><button onClick={runGeeAnalysis} disabled={geeServer !== 'ready' || geeBusy || !start || !end || start >= end} className="flex items-center gap-2 rounded-md bg-[#9f7017] px-4 py-2.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50">{geeBusy ? <LoaderCircle className="size-4 animate-spin"/> : <Play className="size-4"/>}{geeBusy ? 'GEE正在计算…' : '开始真实分析'}</button><button onClick={downloadGeeScript} disabled={busy || !start || !end || start >= end} className="flex items-center gap-2 rounded-md border border-[#aa9d77] px-4 py-2.5 text-sm font-semibold text-[#63542d] disabled:opacity-50"><CloudDownload className="size-4"/>下载完整GEE脚本</button></div>
                 {geeAnalysisMessage && <output className={`mt-4 block rounded-md px-3 py-2.5 text-sm leading-6 ${geeAnalysisMessage.includes('失败') || geeAnalysisMessage.includes('请') || geeAnalysisMessage.includes('没有') || geeAnalysisMessage.includes('不匹配') ? 'bg-[#f8dfd8] text-[#803426]' : 'bg-[#dceee7] text-[#1c5e50]'}`}>{geeAnalysisMessage}</output>}
               </section>
 
