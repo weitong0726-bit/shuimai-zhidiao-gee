@@ -13,6 +13,10 @@ https://shuimai-zhidiao.weitong0726.chatgpt.site
 - 按日期范围检索 Sentinel-2 SR Harmonized 影像
 - 生成 RGB、NDVI、NDMI、MNDWI 遥感结果
 - 返回有效影像数量和指数区域均值
+- 按每个面要素统计 NDVI、NDMI、MNDWI 与有效覆盖率
+- 读取研究区中心附近的 ERA5 历史气象或未来天气预报
+- 逐地块填写根区含水率、生态阈值、根深和植被参数
+- 运行连续 7 天不补水缺水诊断，输出风险排序、逐日轨迹与 JSON 报告
 - 通过服务端服务账号访问 GEE，访客无需 Google 账号
 - 包含边界大小、要素数量、日期跨度和请求频率限制
 
@@ -42,6 +46,7 @@ pnpm build
 - Tailwind CSS
 - shpjs
 - Google Earth Engine JavaScript API 与 REST `computePixels`
+- Open-Meteo 历史天气与预报 API
 
 ## 安全说明
 

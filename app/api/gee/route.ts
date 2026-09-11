@@ -20,9 +20,10 @@ type EeApi = {
   };
   Feature: (geometry: EeObject, properties?: Record<string, unknown>) => EeObject;
   FeatureCollection: (value: unknown) => EeObject;
+  Image: (value: unknown) => EeObject;
   ImageCollection: (assetId: string) => EeObject;
   Filter: { lt: (property: string, value: number) => unknown };
-  Reducer: { mean: () => unknown };
+  Reducer: { mean: () => unknown; min: () => unknown };
   Serializer: { encodeCloudApi: (value: EeObject) => Record<string, unknown> };
 };
 
@@ -223,7 +224,7 @@ async function computePng(
 
 function validateRequest(payload: unknown) {
   if (!payload || typeof payload !== 'object') throw new Error('请求内容无效。');
-  const input = payload as { boundary?: unknown; start?: unknown; end?: unknown; index?: unknown };
+  const input = payload as { boundary?: unknown; start?: unknown; end?: unknown; index?: unknown; mode?: unknown };
   const boundary = input.boundary as { type?: unknown; features?: Array<{ geometry?: unknown; properties?: Record<string, unknown> }> };
   if (boundary?.type !== 'FeatureCollection' || !Array.isArray(boundary.features) || boundary.features.length < 1 || boundary.features.length > 100) {
     throw new Error('研究区必须包含1—100个面要素。');
@@ -238,7 +239,8 @@ function validateRequest(payload: unknown) {
   const days = (Date.parse(end) - Date.parse(start)) / 86_400_000;
   if (days > 366) throw new Error('单次分析时间范围不能超过366天。');
   if (!['RGB', 'NDVI', 'NDMI', 'MNDWI'].includes(index)) throw new Error('分析指标无效。');
-  return { boundary: { type: 'FeatureCollection' as const, features }, start, end, index };
+  if (!Number.isFinite(days) || new Date(start).toISOString().slice(0, 10) !== start || new Date(end).toISOString().slice(0, 10) !== end) throw new Error('分析日期无效。');
+  return { boundary: { type: 'FeatureCollection' as const, features }, start, end, index, diagnosis: input.mode === 'diagnosis' };
 }
 
 function checkRateLimit(request: Request) {
@@ -284,12 +286,12 @@ export async function POST(request: Request) {
     const contentLength = Number(request.headers.get('content-length') || 0);
     if (contentLength > 2_000_000) return Response.json({ error: '研究区文件过大。' }, { status: 413 });
     checkRateLimit(request);
-    const { boundary, start, end, index } = validateRequest(await request.json());
+    const { boundary, start, end, index, diagnosis } = validateRequest(await request.json());
     stage = 'initialize';
     const auth = await initializeGee();
     stage = 'geometry';
-    const units = ee.FeatureCollection(boundary.features.map((feature) =>
-      ee.Feature(geeGeometry(feature.geometry), feature.properties || {}),
+    const units = ee.FeatureCollection(boundary.features.map((feature, i) =>
+      ee.Feature(geeGeometry(feature.geometry), { id: String(feature.properties?.id || `U${i + 1}`) }),
     ));
     const region = units.geometry();
     const collection = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
@@ -299,7 +301,27 @@ export async function POST(request: Request) {
     stage = 'scene-count';
     const sceneCount = await evaluate<number>(collection.size());
     if (!sceneCount) throw new Error('所选时段没有满足条件的Sentinel-2影像，请扩大日期范围。');
-    const composite = collection.median().clip(region);
+    const composite = collection.map((value: EeObject) => {
+      const image = ee.Image(value);
+      const scl = image.select('SCL');
+      // Keep vegetation, bare soil and water; reject shadow, clouds, snow and defective pixels.
+      return image.updateMask(scl.eq(4).or(scl.eq(5)).or(scl.eq(6)));
+    }).median().clip(region);
+    if (diagnosis) {
+      stage = 'unit-diagnosis';
+      const coverage = composite.select(['B8', 'B4', 'B3', 'B11']).mask()
+        .reduce(ee.Reducer.min()).unmask(0, false).clip(region).rename('coverage');
+      const indices = composite.normalizedDifference(['B8', 'B4']).rename('NDVI')
+        .addBands(composite.normalizedDifference(['B8', 'B11']).rename('NDMI'))
+        .addBands(composite.normalizedDifference(['B3', 'B11']).rename('MNDWI'))
+        .addBands(coverage);
+      const reduced = indices.reduceRegions({ collection: units, reducer: ee.Reducer.mean(), scale: 20, crs: 'EPSG:4326', tileScale: 4, maxPixelsPerRegion: 2e7 });
+      const stats = await evaluate<{ features: Array<{ properties: Record<string, unknown> }> }>(reduced.map((value: EeObject) => {
+        const feature = ee.Feature(value);
+        return ee.Feature(feature.geometry(), feature.toDictionary()).set('areaM2', feature.geometry().area(1));
+      }));
+      return Response.json({ units: stats.features.map((feature) => feature.properties), sceneCount, start, end, scale: 20, source: 'COPERNICUS/S2_SR_HARMONIZED', generatedAt: new Date().toISOString() });
+    }
     let image = composite;
     let bandIds = ['B4', 'B3', 'B2'];
     let visualizationOptions: Record<string, unknown> = { ranges: [{ min: 0, max: 3000 }], gamma: 1.15 };

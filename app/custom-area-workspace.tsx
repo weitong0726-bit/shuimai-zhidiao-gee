@@ -2,6 +2,7 @@
 
 import { ChangeEvent, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
+import { WaterDiagnosisPanel } from './water-diagnosis-panel';
 import {
   AlertCircle,
   CheckCircle2,
@@ -179,6 +180,7 @@ async function makeGeeScript(summary: AreaSummary, start: string, end: string, p
 
 export function CustomAreaWorkspace() {
   const [summary, setSummary] = useState<AreaSummary | null>(null);
+  const [boundaryRevision, setBoundaryRevision] = useState(0);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [start, setStart] = useState('2025-06-01');
@@ -206,6 +208,8 @@ export function CustomAreaWorkspace() {
     if (!file) return;
     setBusy(true);
     setError('');
+    setGeeResult(null);
+    setBoundaryRevision((revision) => revision + 1);
     try {
       if (file.size > MAX_FILE_BYTES) throw new Error('文件超过25MB，请先简化边界或减少要素。');
       let parsed: unknown;
@@ -300,12 +304,13 @@ export function CustomAreaWorkspace() {
             <div className="mt-6 rounded-lg border border-white/15 bg-white/5 p-4 text-sm leading-6 text-[#d2e1dd]"><b className="text-white">Shapefile请先压缩为ZIP</b><br/>同名的.shp、.shx、.dbf、.prj放在压缩包根目录；缺少.prj可能导致坐标无法转换。</div>
             <label className="mt-5 flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-[#d9aa45] px-4 py-3 text-sm font-semibold text-[#17332f] hover:bg-[#e5ba5c]">
               {busy ? <LoaderCircle className="size-4 animate-spin"/> : <UploadCloud className="size-4"/>}选择ZIP或GeoJSON
-              <input className="sr-only" type="file" accept=".zip,.geojson,.json,application/zip,application/geo+json,application/json" onChange={importBoundary}/>
+              <input className="sr-only" type="file" disabled={geeBusy || busy} accept=".zip,.geojson,.json,application/zip,application/geo+json,application/json" onChange={importBoundary}/>
             </label>
             <p className="mt-3 text-xs leading-5 text-[#9ebbb4]">最多25MB、100个面要素。点和线文件不会进入分析。</p>
             <ol className="mt-6 space-y-3 border-t border-white/10 pt-5 text-xs leading-5 text-[#c7dad5]">
               <li className="flex gap-3"><span className="grid size-6 shrink-0 place-items-center rounded-full border border-[#d9aa45] text-[#edc86f]">1</span><span>上传并确认研究区边界</span></li>
               <li className="flex gap-3"><span className="grid size-6 shrink-0 place-items-center rounded-full border border-white/25">2</span><span>选择指标并直接读取GEE影像</span></li>
+              <li className="flex gap-3"><span className="grid size-6 shrink-0 place-items-center rounded-full border border-white/25">3</span><span>读取逐单元数据、校准参数并诊断7天缺水</span></li>
             </ol>
             {error && <p role="alert" className="mt-4 flex gap-2 rounded-md bg-[#7a2f25]/40 p-3 text-xs leading-5 text-[#ffd5cc]"><AlertCircle className="mt-0.5 size-4 shrink-0"/>{error}</p>}
             {summary && <div className="mt-5 border-t border-white/10 pt-5"><p className="flex items-center gap-2 text-sm text-[#aee0ca]"><CheckCircle2 className="size-4"/>边界读取成功</p><dl className="mt-3 space-y-2 text-xs"><div className="flex justify-between gap-3"><dt className="text-[#9ebbb4]">文件</dt><dd className="max-w-48 truncate">{summary.fileName}</dd></div><div className="flex justify-between"><dt className="text-[#9ebbb4]">面要素</dt><dd>{summary.collection.features.length}个</dd></div><div className="flex justify-between"><dt className="text-[#9ebbb4]">估算面积</dt><dd>{summary.areaKm2.toFixed(2)} km²</dd></div><div className="flex justify-between"><dt className="text-[#9ebbb4]">建议投影</dt><dd>{summary.crs}</dd></div></dl></div>}
@@ -320,8 +325,8 @@ export function CustomAreaWorkspace() {
                 <div className="flex flex-wrap items-center justify-between gap-3"><div className="flex items-center gap-3"><span className="grid size-10 place-items-center rounded-lg bg-[#d9aa45] text-[#17332f]"><Cloudy className="size-5"/></span><div><p className="text-xs text-[#756c50]">第2步</p><h3 id="gee-analysis-title" className="text-lg font-semibold">直接读取研究区遥感结果</h3></div></div><span className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold ${geeServer === 'ready' ? 'bg-[#d8eee4] text-[#17614f]' : geeServer === 'checking' ? 'bg-[#efe7d1] text-[#806222]' : 'bg-[#f4ddd8] text-[#8b382b]'}`}>{geeServer === 'checking' ? <LoaderCircle className="size-4 animate-spin"/> : <Satellite className="size-4"/>}{geeServer === 'ready' ? 'GEE云端已就绪' : geeServer === 'checking' ? '正在检查GEE服务' : 'GEE服务暂不可用'}</span></div>
                 <p className="mt-4 rounded-lg border border-[#dbc991] bg-white/70 p-3 text-sm leading-6 text-[#655a38]">无需登录Google账号。研究区将发送到网站服务器，由站点专用服务账号完成GEE计算；服务账号密钥不会传到浏览器。</p>
                 <div className="mt-4 grid gap-4 sm:grid-cols-3">
-                  <label className="text-sm font-medium">开始日期<input type="date" value={start} onChange={(event) => setStart(event.target.value)} className="mt-2 w-full rounded-md border bg-white px-3 py-2.5 text-sm"/></label>
-                  <label className="text-sm font-medium">结束日期<input type="date" value={end} onChange={(event) => setEnd(event.target.value)} className="mt-2 w-full rounded-md border bg-white px-3 py-2.5 text-sm"/></label>
+                  <label className="text-sm font-medium">开始日期<input type="date" disabled={geeBusy} value={start} onChange={(event) => { setStart(event.target.value); setGeeResult(null); }} className="mt-2 w-full rounded-md border bg-white px-3 py-2.5 text-sm"/></label>
+                  <label className="text-sm font-medium">结束日期<input type="date" disabled={geeBusy} value={end} onChange={(event) => { setEnd(event.target.value); setGeeResult(null); }} className="mt-2 w-full rounded-md border bg-white px-3 py-2.5 text-sm"/></label>
                   <label className="text-sm font-medium">显示内容<select value={geeIndex} onChange={(event) => setGeeIndex(event.target.value as GeeIndex)} className="mt-2 w-full rounded-md border bg-white px-3 py-2.5 text-sm"><option value="RGB">Sentinel-2真彩色</option><option value="NDVI">NDVI植被活力</option><option value="NDMI">NDMI冠层含水</option><option value="MNDWI">MNDWI开放水体</option></select></label>
                 </div>
                 <div className="mt-4 flex flex-wrap items-center gap-3"><button onClick={runGeeAnalysis} disabled={geeServer !== 'ready' || geeBusy || !start || !end || start >= end} className="flex items-center gap-2 rounded-md bg-[#9f7017] px-4 py-2.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50">{geeBusy ? <LoaderCircle className="size-4 animate-spin"/> : <Play className="size-4"/>}{geeBusy ? 'GEE正在计算…' : '开始真实分析'}</button><button onClick={downloadGeeScript} disabled={busy || !start || !end || start >= end} className="flex items-center gap-2 rounded-md border border-[#aa9d77] px-4 py-2.5 text-sm font-semibold text-[#63542d] disabled:opacity-50"><CloudDownload className="size-4"/>下载完整GEE脚本</button></div>
@@ -331,8 +336,9 @@ export function CustomAreaWorkspace() {
               {geeResult && <section className="mt-5 overflow-hidden rounded-xl border border-[#b8b2a4] bg-white" aria-label="GEE分析结果">
                 <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#d8d4ca] px-5 py-4"><div><p className="text-xs text-[#687873]">真实GEE计算结果</p><h3 className="mt-1 text-lg font-semibold">{geeResult.index === 'RGB' ? 'Sentinel-2真彩色影像' : `${geeResult.index}区域合成影像`}</h3></div><div className="flex gap-5 text-right text-xs text-[#687873]"><span>可用影像<strong className="mt-1 block font-mono text-base text-[#17332f]">{geeResult.sceneCount}景</strong></span>{geeResult.mean !== null && <span>区域均值<strong className="mt-1 block font-mono text-base text-[#17332f]">{geeResult.mean.toFixed(3)}</strong></span>}</div></div>
                 <div className="bg-[#dfe7e3] p-3"><Image src={geeResult.imageUrl} alt={`${geeResult.index}研究区遥感分析结果`} width={1000} height={700} unoptimized className="mx-auto h-auto max-h-[640px] w-full object-contain"/></div>
-                <p className="px-5 py-3 text-xs text-[#6a7874]">生成于 {geeResult.generatedAt} · 数据源：COPERNICUS/S2_SR_HARMONIZED · 场景云量&lt;60%</p>
+                <p className="px-5 py-3 text-xs text-[#6a7874]">生成于 {geeResult.generatedAt} · 数据源：COPERNICUS/S2_SR_HARMONIZED · 场景云量&lt;60%，SCL像元去云后合成</p>
               </section>}
+              <WaterDiagnosisPanel key={`${boundaryRevision}-${start}-${end}`} boundary={summary.collection} centroid={summary.centroid} start={start} end={end} ready={geeServer === 'ready' && !geeBusy && !busy}/>
             </div>}
           </div>
         </div>
