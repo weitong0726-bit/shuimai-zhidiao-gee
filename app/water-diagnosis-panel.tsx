@@ -24,6 +24,30 @@ const fields: Array<{ key: keyof WaterParameters; label: string; min: number; ma
 const value = (n: number | null | undefined, digits = 3) => typeof n === 'number' && Number.isFinite(n) ? n.toFixed(digits) : '缺测';
 const buttonClass = 'inline-flex items-center gap-2 rounded-md bg-[#176356] px-4 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50';
 
+async function loadWeather(start: string, centroid: [number, number]) {
+  const local = `/api/weather?${new URLSearchParams({ latitude: String(centroid[1]), longitude: String(centroid[0]), start })}`;
+  const first = await fetch(local, { signal: AbortSignal.timeout(30000) });
+  if (first.ok) return first.json() as Promise<Weather>;
+  const localError = (await first.json()) as { error?: string };
+  if (!/429|频繁|暂不可用/.test(localError.error || '')) throw new Error(localError.error || '气象读取失败');
+  const end = new Date(Date.parse(start) + 6 * 86400000).toISOString().slice(0, 10);
+  const today = new Date().toISOString().slice(0, 10);
+  const archive = Date.parse(end) <= Date.parse(today) - 7 * 86400000;
+  const url = new URL(archive ? 'https://archive-api.open-meteo.com/v1/archive' : 'https://api.open-meteo.com/v1/forecast');
+  url.search = new URLSearchParams({ latitude: centroid[1].toFixed(4), longitude: centroid[0].toFixed(4), start_date: start, end_date: end, daily: 'precipitation_sum,et0_fao_evapotranspiration', timezone: 'GMT', ...(archive ? { models: 'era5' } : {}) }).toString();
+  const response = await fetch(url, { signal: AbortSignal.timeout(30000) });
+  if (!response.ok) throw new Error(`气象服务暂不可用（${response.status}），请稍后再试。`);
+  const data = await response.json() as { latitude: number; longitude: number; daily_units?: Record<string, string>; daily?: { time: string[]; precipitation_sum: Array<number | null>; et0_fao_evapotranspiration: Array<number | null> } };
+  const daily = data.daily;
+  if (!daily || daily.time?.length !== 7 || data.daily_units?.precipitation_sum !== 'mm' || data.daily_units?.et0_fao_evapotranspiration !== 'mm') throw new Error('气象数据不足7天或单位不符。');
+  const days = daily.time.map((date, i) => {
+    const rain = daily.precipitation_sum[i], et0 = daily.et0_fao_evapotranspiration[i];
+    if (date !== new Date(Date.parse(start) + i * 86400000).toISOString().slice(0, 10) || typeof rain !== 'number' || !Number.isFinite(rain) || rain < 0 || typeof et0 !== 'number' || !Number.isFinite(et0) || et0 < 0) throw new Error('气象数据存在缺测或日期不连续，请更换窗口。');
+    return { date, rain, et0 };
+  });
+  return { days, source: archive ? 'Open-Meteo / ERA5 历史再分析' : 'Open-Meteo 多模式天气预报', sourceUrl: url.toString(), mode: archive ? 'historical' as const : 'forecast' as const, gridLocation: [data.longitude, data.latitude], retrievedAt: new Date().toISOString(), timezone: 'UTC' };
+}
+
 export function WaterDiagnosisPanel({ boundary, centroid, start, end, ready }: Props) {
   const [evidence, setEvidence] = useState<Evidence | null>(null);
   const [weather, setWeather] = useState<Weather | null>(null);
@@ -40,7 +64,6 @@ export function WaterDiagnosisPanel({ boundary, centroid, start, end, ready }: P
 
   async function loadEvidence() {
     setBusy(true); setError(''); setResults(null); setEvidence(null); setWeather(null);
-    const weatherUrl = `/api/weather?${new URLSearchParams({ latitude: String(centroid[1]), longitude: String(centroid[0]), start: weatherStart })}`;
     const request = async (url: string, init?: RequestInit) => {
       const response = await fetch(url, { ...init, signal: AbortSignal.timeout(180000) });
       const payload = await response.json();
@@ -50,7 +73,7 @@ export function WaterDiagnosisPanel({ boundary, centroid, start, end, ready }: P
     try {
       const [remote, meteo] = await Promise.allSettled([
         request('/api/gee', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ boundary, start, end, index: 'NDMI', mode: 'diagnosis' }) }),
-        request(weatherUrl),
+        loadWeather(weatherStart, centroid),
       ]);
       const messages: string[] = [];
       if (remote.status === 'fulfilled') {
