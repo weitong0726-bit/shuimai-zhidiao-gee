@@ -149,7 +149,7 @@ select:focus-visible {
 
 .workflow-strip {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   overflow: hidden;
   border: 1px solid #bbc9c5;
   background: #bbc9c5;
@@ -205,5 +205,11 @@ select:focus-visible {
 @media (max-width: 760px) {
   .workflow-strip {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 761px) and (max-width: 1100px) {
+  .workflow-strip {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }

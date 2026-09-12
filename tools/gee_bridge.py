@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import base64
+import datetime as dt
 import json
 import math
 import os
@@ -79,6 +80,154 @@ def finite_number(value: Any) -> float | None:
     if isinstance(value, (int, float)) and math.isfinite(float(value)):
         return round(float(value), 5)
     return None
+
+
+def seasonal_window(year: int, start: str, end: str) -> tuple[str, str]:
+    start_date = dt.date.fromisoformat(start)
+    end_date = dt.date.fromisoformat(end)
+    duration = end_date - start_date
+    try:
+        shifted_start = start_date.replace(year=year)
+    except ValueError:
+        shifted_start = start_date.replace(year=year, day=28)
+    return shifted_start.isoformat(), (shifted_start + duration).isoformat()
+
+
+def context_evidence(
+    region: ee.Geometry,
+    request: dict[str, Any],
+    scene_count: int,
+    unit_metrics: list[dict[str, Any]],
+) -> dict[str, Any]:
+    era5 = ee.ImageCollection('ECMWF/ERA5_LAND/DAILY_AGGR').filterDate(
+        request['start'], request['end']
+    )
+    climate_image = (
+        era5.select('total_precipitation_sum').sum().multiply(1000).max(0).rename('precipitation_mm')
+        .addBands(era5.select('potential_evaporation_sum').sum().multiply(-1000).max(0).rename('potential_evaporation_mm'))
+        .addBands(era5.select('runoff_sum').sum().multiply(1000).max(0).rename('runoff_mm'))
+        .addBands(era5.select('volumetric_soil_water_layer_1').mean().rename('soil_water'))
+    )
+    climate_stats = climate_image.reduceRegion(
+        reducer=ee.Reducer.mean(), geometry=region, scale=11132,
+        bestEffort=True, maxPixels=100_000_000,
+    ).getInfo()
+    precipitation = finite_number(climate_stats.get('precipitation_mm'))
+    potential_evaporation = finite_number(climate_stats.get('potential_evaporation_mm'))
+    runoff = finite_number(climate_stats.get('runoff_mm'))
+    soil_water = finite_number(climate_stats.get('soil_water'))
+
+    historical_water = ee.Image('JRC/GSW1_4/GlobalSurfaceWater').select(['occurrence', 'seasonality'])
+    water_stats = historical_water.reduceRegion(
+        reducer=ee.Reducer.mean(), geometry=region, scale=30,
+        bestEffort=True, maxPixels=100_000_000,
+    ).getInfo()
+    occurrence = finite_number(water_stats.get('occurrence'))
+    seasonality = finite_number(water_stats.get('seasonality'))
+    total_area = sum(metric.get('areaM2') or 0 for metric in unit_metrics)
+    recent_water_area = sum(metric.get('waterAreaM2') or 0 for metric in unit_metrics)
+    recent_water_fraction = round(min(1, recent_water_area / total_area), 5) if total_area else None
+
+    start_year = dt.date.fromisoformat(request['start']).year
+    series_features = []
+    for year in range(max(2017, start_year - 4), start_year + 1):
+        year_start, year_end = seasonal_window(year, request['start'], request['end'])
+        yearly = (
+            ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
+            .filterBounds(region)
+            .filterDate(year_start, year_end)
+            .filter(ee.Filter.lte('CLOUDY_PIXEL_PERCENTAGE', 80))
+            .map(prepare_sentinel)
+        )
+        yearly_composite = yearly.median()
+        yearly_metrics = (
+            yearly_composite.normalizedDifference(['B8', 'B4']).rename('NDVI')
+            .addBands(yearly_composite.normalizedDifference(['B8', 'B11']).rename('NDMI'))
+            .addBands(yearly_composite.normalizedDifference(['B3', 'B11']).rename('MNDWI'))
+        )
+        stats = yearly_metrics.reduceRegion(
+            reducer=ee.Reducer.mean(), geometry=region, scale=20,
+            bestEffort=True, maxPixels=1_000_000_000,
+        )
+        series_features.append(
+            ee.Feature(None, stats)
+            .set('year', year)
+            .set('start', year_start)
+            .set('end', year_end)
+            .set('sceneCount', yearly.size())
+        )
+    series_info = ee.FeatureCollection(series_features).getInfo()
+    annual_series = []
+    for feature in series_info.get('features', []):
+        props = feature.get('properties', {})
+        annual_series.append({
+            'year': int(props.get('year')),
+            'start': props.get('start'),
+            'end': props.get('end'),
+            'sceneCount': int(props.get('sceneCount') or 0),
+            'ndvi': finite_number(props.get('NDVI')),
+            'ndmi': finite_number(props.get('NDMI')),
+            'mndwi': finite_number(props.get('MNDWI')),
+        })
+
+    history = [row['ndmi'] for row in annual_series[:-1] if row['ndmi'] is not None]
+    current_ndmi = annual_series[-1]['ndmi'] if annual_series else None
+    history_mean = sum(history) / len(history) if history else None
+    history_std = (
+        math.sqrt(sum((value - history_mean) ** 2 for value in history) / len(history))
+        if history_mean is not None and history else None
+    )
+    anomaly_z = (
+        round((current_ndmi - history_mean) / history_std, 3)
+        if current_ndmi is not None and history_mean is not None and history_std and history_std > 1e-6
+        else None
+    )
+    coverages = [metric['validFraction'] for metric in unit_metrics if metric.get('validFraction') is not None]
+    mean_coverage = sum(coverages) / len(coverages) if coverages else 0
+    if scene_count >= 5 and mean_coverage >= 0.8 and len(history) >= 3:
+        confidence = 'high'
+    elif scene_count >= 3 and mean_coverage >= 0.6 and len(history) >= 2:
+        confidence = 'medium'
+    else:
+        confidence = 'low'
+
+    flood_pressure = round(
+        100 * (
+            0.45 * min(1, (recent_water_fraction or 0) / 0.30)
+            + 0.35 * min(1, (runoff or 0) / 50)
+            + 0.20 * min(1, (occurrence or 0) / 100)
+        ), 1
+    )
+    return {
+        'climate': {
+            'precipitationMm': precipitation,
+            'potentialEvaporationMm': potential_evaporation,
+            'waterBalanceMm': round(precipitation - potential_evaporation, 2)
+            if precipitation is not None and potential_evaporation is not None else None,
+            'runoffMm': runoff,
+            'soilWaterM3m3': soil_water,
+            'source': 'ECMWF/ERA5_LAND/DAILY_AGGR',
+            'scaleM': 11132,
+        },
+        'waterBaseline': {
+            'occurrencePct': occurrence,
+            'seasonalityMonths': seasonality,
+            'recentWaterFraction': recent_water_fraction,
+            'source': 'JRC/GSW1_4/GlobalSurfaceWater',
+            'scaleM': 30,
+        },
+        'floodPressureScore': flood_pressure,
+        'annualSeries': annual_series,
+        'uncertainty': {
+            'confidence': confidence,
+            'meanValidCoverage': round(mean_coverage, 4),
+            'historicalYears': len(history),
+            'ndmiHistoricalMean': finite_number(history_mean),
+            'ndmiHistoricalStd': finite_number(history_std),
+            'ndmiAnomalyZ': anomaly_z,
+        },
+        'methodNote': '气候量为ERA5-Land研究区均值；洪水压力是近期水面、径流和历史水面频率的筛查分，不等同于水动力洪水风险。',
+    }
 
 
 def analyze(payload: Any) -> dict[str, Any]:
@@ -162,6 +311,8 @@ def analyze(payload: Any) -> dict[str, Any]:
         ).getInfo()
         mean_value = finite_number(stats.get(request['index']))
 
+    context = context_evidence(region, request, scene_count, unit_metrics)
+
     return {
         'imageUrl': image_url,
         'index': request['index'],
@@ -173,6 +324,7 @@ def analyze(payload: Any) -> dict[str, Any]:
         'dataSource': 'COPERNICUS/S2_SR_HARMONIZED',
         'scaleM': 20,
         'qualityNote': '已使用SCL剔除云、云影和雪像元；单元有效覆盖率过低时应延长时间窗口。',
+        'context': context,
     }
 
 

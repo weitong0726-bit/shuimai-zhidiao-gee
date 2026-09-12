@@ -37,7 +37,7 @@ type EeApi = {
     MultiPolygon: (coordinates: unknown) => EeObject;
   };
   Feature: (
-    geometry: EeObject,
+    geometry: EeObject | null,
     properties?: Record<string, unknown>,
   ) => EeObject;
   FeatureCollection: (value: unknown) => EeObject;
@@ -50,6 +50,10 @@ type EeApi = {
 
 const ee = earthEngineModule as EeApi;
 const requestBuckets = new Map<string, { count: number; resetAt: number }>();
+const analysisCache = new Map<
+  string,
+  { expiresAt: number; payload: Record<string, unknown> }
+>();
 type GeeAuth = {
   token: string;
   projectId: string;
@@ -364,6 +368,273 @@ function finiteNumber(value: unknown) {
     : null;
 }
 
+async function cacheKey(value: unknown) {
+  const bytes = new TextEncoder().encode(JSON.stringify(value));
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  return Array.from(new Uint8Array(digest))
+    .map((byte) => byte.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+function cacheResult(key: string, payload: Record<string, unknown>) {
+  const now = Date.now();
+  for (const [existingKey, item] of analysisCache) {
+    if (item.expiresAt <= now) analysisCache.delete(existingKey);
+  }
+  if (analysisCache.size >= 4) {
+    const oldest = analysisCache.keys().next().value;
+    if (oldest) analysisCache.delete(oldest);
+  }
+  analysisCache.set(key, { expiresAt: now + 15 * 60_000, payload });
+}
+
+function jsonWithTrace(
+  payload: unknown,
+  status: number,
+  requestId: string,
+  cacheStatus?: 'HIT' | 'MISS',
+) {
+  const headers = new Headers({ 'x-request-id': requestId });
+  if (cacheStatus) headers.set('x-analysis-cache', cacheStatus);
+  return Response.json(payload, { status, headers });
+}
+
+function seasonalWindow(year: number, start: string, end: string) {
+  const sourceStart = new Date(`${start}T00:00:00Z`);
+  const durationMs = Date.parse(end) - Date.parse(start);
+  const day =
+    sourceStart.getUTCMonth() === 1 && sourceStart.getUTCDate() === 29
+      ? 28
+      : sourceStart.getUTCDate();
+  const shiftedStart = new Date(Date.UTC(year, sourceStart.getUTCMonth(), day));
+  const shiftedEnd = new Date(shiftedStart.getTime() + durationMs);
+  return {
+    start: shiftedStart.toISOString().slice(0, 10),
+    end: shiftedEnd.toISOString().slice(0, 10),
+  };
+}
+
+async function computeContextEvidence(
+  region: EeObject,
+  start: string,
+  end: string,
+  sceneCount: number,
+  unitMetrics: Array<{
+    areaM2: number | null;
+    validFraction: number | null;
+    waterAreaM2: number | null;
+  }>,
+) {
+  const era5 = ee
+    .ImageCollection('ECMWF/ERA5_LAND/DAILY_AGGR')
+    .filterDate(start, end);
+  const climateImage = era5
+    .select('total_precipitation_sum')
+    .sum()
+    .multiply(1000)
+    .max(0)
+    .rename('precipitation_mm')
+    .addBands(
+      era5
+        .select('potential_evaporation_sum')
+        .sum()
+        .multiply(-1000)
+        .max(0)
+        .rename('potential_evaporation_mm'),
+    )
+    .addBands(
+      era5.select('runoff_sum').sum().multiply(1000).max(0).rename('runoff_mm'),
+    )
+    .addBands(
+      era5.select('volumetric_soil_water_layer_1').mean().rename('soil_water'),
+    );
+  const climateStatsPromise = evaluate<Record<string, unknown>>(
+    climateImage.reduceRegion({
+      reducer: ee.Reducer.mean(),
+      geometry: region,
+      scale: 11132,
+      bestEffort: true,
+      maxPixels: 1e8,
+    }),
+  );
+  const historicalWater = ee
+    .Image('JRC/GSW1_4/GlobalSurfaceWater')
+    .select(['occurrence', 'seasonality']);
+  const waterStatsPromise = evaluate<Record<string, unknown>>(
+    historicalWater.reduceRegion({
+      reducer: ee.Reducer.mean(),
+      geometry: region,
+      scale: 30,
+      bestEffort: true,
+      maxPixels: 1e8,
+    }),
+  );
+
+  const startYear = Number(start.slice(0, 4));
+  const annualFeatures: EeObject[] = [];
+  for (let year = Math.max(2017, startYear - 4); year <= startYear; year += 1) {
+    const window = seasonalWindow(year, start, end);
+    const yearly = ee
+      .ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
+      .filterBounds(region)
+      .filterDate(window.start, window.end)
+      .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 80))
+      .map((candidate: unknown) => {
+        const source = candidate as EeObject;
+        const scl = source.select('SCL');
+        const clear = scl
+          .neq(0)
+          .and(scl.neq(1))
+          .and(scl.neq(3))
+          .and(scl.neq(8))
+          .and(scl.neq(9))
+          .and(scl.neq(10))
+          .and(scl.neq(11));
+        return source
+          .select(['B2', 'B3', 'B4', 'B8', 'B11'])
+          .multiply(0.0001)
+          .updateMask(clear);
+      });
+    const composite = yearly.median();
+    const yearlyMetrics = composite
+      .normalizedDifference(['B8', 'B4'])
+      .rename('NDVI')
+      .addBands(composite.normalizedDifference(['B8', 'B11']).rename('NDMI'))
+      .addBands(composite.normalizedDifference(['B3', 'B11']).rename('MNDWI'));
+    const stats = yearlyMetrics.reduceRegion({
+      reducer: ee.Reducer.mean(),
+      geometry: region,
+      scale: 20,
+      bestEffort: true,
+      maxPixels: 1e9,
+    });
+    annualFeatures.push(
+      ee
+        .Feature(null, stats as unknown as Record<string, unknown>)
+        .set('year', year)
+        .set('start', window.start)
+        .set('end', window.end)
+        .set('sceneCount', yearly.size()),
+    );
+  }
+  const seriesResultPromise = evaluate<{
+    features?: Array<{ properties?: Record<string, unknown> }>;
+  }>(ee.FeatureCollection(annualFeatures));
+  const [climateStats, waterStats, seriesResult] = await Promise.all([
+    climateStatsPromise,
+    waterStatsPromise,
+    seriesResultPromise,
+  ]);
+  const annualSeries = (seriesResult.features || []).map((feature) => {
+    const properties = feature.properties || {};
+    const rowStart =
+      typeof properties.start === 'string' ? properties.start : '';
+    const rowEnd = typeof properties.end === 'string' ? properties.end : '';
+    return {
+      year: Number(properties.year),
+      start: rowStart,
+      end: rowEnd,
+      sceneCount: Number(properties.sceneCount || 0),
+      ndvi: finiteNumber(properties.NDVI),
+      ndmi: finiteNumber(properties.NDMI),
+      mndwi: finiteNumber(properties.MNDWI),
+    };
+  });
+
+  const precipitation = finiteNumber(climateStats.precipitation_mm);
+  const potentialEvaporation = finiteNumber(
+    climateStats.potential_evaporation_mm,
+  );
+  const runoff = finiteNumber(climateStats.runoff_mm);
+  const occurrence = finiteNumber(waterStats.occurrence);
+  const totalArea = unitMetrics.reduce(
+    (sum, unit) => sum + (unit.areaM2 || 0),
+    0,
+  );
+  const recentWaterFraction = totalArea
+    ? Math.min(
+        1,
+        unitMetrics.reduce((sum, unit) => sum + (unit.waterAreaM2 || 0), 0) /
+          totalArea,
+      )
+    : null;
+  const history = annualSeries
+    .slice(0, -1)
+    .map((row) => row.ndmi)
+    .filter((value): value is number => value !== null);
+  const currentNdmi = annualSeries.at(-1)?.ndmi ?? null;
+  const historyMean = history.length
+    ? history.reduce((sum, value) => sum + value, 0) / history.length
+    : null;
+  const historyStd =
+    historyMean === null
+      ? null
+      : Math.sqrt(
+          history.reduce((sum, value) => sum + (value - historyMean) ** 2, 0) /
+            history.length,
+        );
+  const ndmiAnomalyZ =
+    currentNdmi !== null &&
+    historyMean !== null &&
+    historyStd !== null &&
+    historyStd > 1e-6
+      ? Math.round(((currentNdmi - historyMean) / historyStd) * 1000) / 1000
+      : null;
+  const coverages = unitMetrics
+    .map((unit) => unit.validFraction)
+    .filter((value): value is number => value !== null);
+  const meanValidCoverage = coverages.length
+    ? coverages.reduce((sum, value) => sum + value, 0) / coverages.length
+    : 0;
+  const confidence =
+    sceneCount >= 5 && meanValidCoverage >= 0.8 && history.length >= 3
+      ? 'high'
+      : sceneCount >= 3 && meanValidCoverage >= 0.6 && history.length >= 2
+        ? 'medium'
+        : 'low';
+  const floodPressureScore =
+    Math.round(
+      1000 *
+        (0.45 * Math.min(1, (recentWaterFraction || 0) / 0.3) +
+          0.35 * Math.min(1, (runoff || 0) / 50) +
+          0.2 * Math.min(1, (occurrence || 0) / 100)),
+    ) / 10;
+
+  return {
+    climate: {
+      precipitationMm: precipitation,
+      potentialEvaporationMm: potentialEvaporation,
+      waterBalanceMm:
+        precipitation !== null && potentialEvaporation !== null
+          ? Math.round((precipitation - potentialEvaporation) * 100) / 100
+          : null,
+      runoffMm: runoff,
+      soilWaterM3m3: finiteNumber(climateStats.soil_water),
+      source: 'ECMWF/ERA5_LAND/DAILY_AGGR',
+      scaleM: 11132,
+    },
+    waterBaseline: {
+      occurrencePct: occurrence,
+      seasonalityMonths: finiteNumber(waterStats.seasonality),
+      recentWaterFraction,
+      source: 'JRC/GSW1_4/GlobalSurfaceWater',
+      scaleM: 30,
+    },
+    floodPressureScore,
+    annualSeries,
+    uncertainty: {
+      confidence,
+      meanValidCoverage,
+      historicalYears: history.length,
+      ndmiHistoricalMean: finiteNumber(historyMean),
+      ndmiHistoricalStd: finiteNumber(historyStd),
+      ndmiAnomalyZ,
+    },
+    methodNote:
+      '气候量为ERA5-Land研究区均值；洪水压力是近期水面、径流和历史水面频率的筛查分，不等同于水动力洪水风险。',
+  };
+}
+
 function textValue(values: unknown[], fallback: string) {
   const value = values.find(
     (candidate) =>
@@ -457,6 +728,9 @@ function validateRequest(payload: unknown) {
 function checkRateLimit(request: Request) {
   const key = request.headers.get('cf-connecting-ip') || 'local';
   const now = Date.now();
+  for (const [existingKey, bucket] of requestBuckets) {
+    if (bucket.resetAt < now) requestBuckets.delete(existingKey);
+  }
   const existing = requestBuckets.get(key);
   if (!existing || existing.resetAt < now) {
     requestBuckets.set(key, { count: 1, resetAt: now + 3_600_000 });
@@ -518,22 +792,28 @@ export async function GET() {
 
 export async function POST(request: Request) {
   let stage = 'request';
+  const requestId = crypto.randomUUID();
   try {
     const contentLength = Number(request.headers.get('content-length') || 0);
     if (contentLength > 2_000_000)
-      return Response.json({ error: '研究区文件过大。' }, { status: 413 });
+      return jsonWithTrace({ error: '研究区文件过大。' }, 413, requestId);
     checkRateLimit(request);
-    const { boundary, start, end, index } = validateRequest(
-      await request.json(),
-    );
+    const validated = validateRequest(await request.json());
+    const { boundary, start, end, index } = validated;
+    const resultCacheKey = await cacheKey(validated);
+    const cached = analysisCache.get(resultCacheKey);
+    if (cached && cached.expiresAt > Date.now()) {
+      return jsonWithTrace(cached.payload, 200, requestId, 'HIT');
+    }
     const bridgeResponse = await bridgeRequest('/analyze', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ boundary, start, end, index }),
     });
     if (bridgeResponse) {
-      const payload = await bridgeResponse.json();
-      return Response.json(payload, { status: bridgeResponse.status });
+      const payload = (await bridgeResponse.json()) as Record<string, unknown>;
+      if (bridgeResponse.ok) cacheResult(resultCacheKey, payload);
+      return jsonWithTrace(payload, bridgeResponse.status, requestId, 'MISS');
     }
     stage = 'initialize';
     const auth = await initializeGee();
@@ -644,14 +924,12 @@ export async function POST(request: Request) {
     const reduced = await evaluate<{
       features?: Array<{ properties?: Record<string, unknown> }>;
     }>(
-      metrics
-        .addBands(areaBands)
-        .reduceRegions({
-          collection: units,
-          reducer: combinedReducer,
-          scale: 20,
-          tileScale: 4,
-        }),
+      metrics.addBands(areaBands).reduceRegions({
+        collection: units,
+        reducer: combinedReducer,
+        scale: 20,
+        tileScale: 4,
+      }),
     );
     const unitMetrics = (reduced.features || []).map((feature, position) => {
       const properties = feature.properties || {};
@@ -675,7 +953,15 @@ export async function POST(request: Request) {
         mndwi: finiteNumber(properties.MNDWI_mean),
       };
     });
-    return Response.json({
+    stage = 'context-evidence';
+    const context = await computeContextEvidence(
+      region,
+      start,
+      end,
+      sceneCount,
+      unitMetrics,
+    );
+    const result = {
       imageUrl,
       index,
       sceneCount,
@@ -687,11 +973,14 @@ export async function POST(request: Request) {
       scaleM: 20,
       qualityNote:
         '已使用SCL剔除云、云影和雪像元；单元有效覆盖率过低时应延长时间窗口。',
-    });
+      context,
+    };
+    cacheResult(resultCacheKey, result);
+    return jsonWithTrace(result, 200, requestId, 'MISS');
   } catch (error) {
     const diagnostic = error instanceof Error ? error.message : String(error);
     console.error(`[GEE:${stage}] ${diagnostic.slice(0, 1200)}`);
     const [message, status] = publicError(error);
-    return Response.json({ error: message }, { status });
+    return jsonWithTrace({ error: message }, status, requestId);
   }
 }

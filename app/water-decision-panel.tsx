@@ -13,6 +13,7 @@ import {
   Sparkles,
   Waves,
 } from 'lucide-react';
+import type { DeliveryNetwork, RouteStatus } from './water-network-panel';
 
 export type GeeUnitMetric = {
   id: string;
@@ -42,15 +43,21 @@ export type DecisionUnit = {
   effectiveDepthMm: number;
   ndmi: number | null;
   validFraction: number | null;
+  routeStatus: RouteStatus;
+  efficiency: number;
+  sourceName: string;
 };
 export type DecisionPlan = {
   strategy: string;
   budgetM3: number;
+  requestedM3: number;
   usedM3: number;
+  unallocatedM3: number;
   riskBefore: number;
   riskAfter: number;
   improvement: number;
   source: 'gee' | 'scenario';
+  sensitivity: { improvementLow: number; improvementHigh: number };
   units: DecisionUnit[];
 };
 
@@ -113,17 +120,64 @@ function formatM3(value: number) {
 function allocateExact(total: number, weights: number[]) {
   if (total <= 0 || weights.length === 0) return weights.map(() => 0);
   const weightTotal = weights.reduce((sum, value) => sum + value, 0);
-  const rounded = weights.map((weight) =>
-    Math.round((total * weight) / Math.max(weightTotal, 1)),
-  );
-  const allocatedBeforeLast = rounded
-    .slice(0, -1)
-    .reduce((sum, value) => sum + value, 0);
-  return rounded.map((value, index) =>
-    index === rounded.length - 1
-      ? Math.max(0, total - allocatedBeforeLast)
-      : value,
-  );
+  if (weightTotal <= 0) return weights.map(() => 0);
+  const target = Math.max(0, Math.round(total));
+  const raw = weights.map((weight) => (target * weight) / weightTotal);
+  const allocations = raw.map(Math.floor);
+  const remainder = target - allocations.reduce((sum, value) => sum + value, 0);
+  const priority = raw
+    .map((value, index) => ({ index, fraction: value - Math.floor(value) }))
+    .sort((left, right) => right.fraction - left.fraction);
+  for (let index = 0; index < remainder; index += 1) {
+    allocations[priority[index % priority.length].index] += 1;
+  }
+  return allocations;
+}
+function allocateCapped(total: number, weights: number[], caps: number[]) {
+  let allocations = weights.map(() => 0);
+  let remaining = Math.max(0, Math.round(total));
+  let active = weights
+    .map((weight, index) => ({ index, weight }))
+    .filter(({ index, weight }) => weight > 0 && caps[index] > 0);
+  for (
+    let pass = 0;
+    pass < weights.length + 1 && remaining > 0 && active.length;
+    pass += 1
+  ) {
+    const totalWeight = active.reduce((sum, item) => sum + item.weight, 0);
+    const saturated = active.filter(
+      ({ index, weight }) =>
+        (remaining * weight) / Math.max(totalWeight, 1) >=
+        caps[index] - allocations[index],
+    );
+    if (!saturated.length) {
+      const shares = allocateExact(
+        remaining,
+        active.map((item) => item.weight),
+      );
+      allocations = allocations.map((current, index) => {
+        const position = active.findIndex((item) => item.index === index);
+        return position < 0
+          ? current
+          : Math.min(caps[index], current + shares[position]);
+      });
+      remaining = 0;
+      break;
+    }
+    const saturatedIds = new Set(saturated.map((item) => item.index));
+    allocations = allocations.map((current, index) =>
+      saturatedIds.has(index) ? caps[index] : current,
+    );
+    remaining = Math.max(
+      0,
+      Math.round(total - allocations.reduce((sum, value) => sum + value, 0)),
+    );
+    active = active.filter((item) => !saturatedIds.has(item.index));
+  }
+  return allocations.map((value) => Math.max(0, Math.round(value)));
+}
+function responseAtDepth(depthMm: number, optimized: boolean) {
+  return Math.min(0.65, (1 - Math.exp(-depthMm / 18)) * (optimized ? 1.08 : 1));
 }
 function scoreMetric(metric: GeeUnitMetric) {
   const ndmiDeficit = clamp((0.2 - (metric.ndmi ?? 0.2)) / 0.7);
@@ -149,6 +203,9 @@ function downloadPlan(plan: DecisionPlan, evidence?: GeeEvidence | null) {
     '方案后风险分',
     'NDMI',
     '有效覆盖率',
+    '线路状态',
+    '到达效率',
+    '水源',
     '分配策略',
     '诊断开始',
     '诊断结束',
@@ -165,6 +222,9 @@ function downloadPlan(plan: DecisionPlan, evidence?: GeeEvidence | null) {
     unit.validFraction === null
       ? ''
       : `${(unit.validFraction * 100).toFixed(1)}%`,
+    unit.routeStatus,
+    `${(unit.efficiency * 100).toFixed(0)}%`,
+    unit.sourceName,
     plan.strategy,
     evidence?.start || '',
     evidence?.end || '',
@@ -185,10 +245,12 @@ function downloadPlan(plan: DecisionPlan, evidence?: GeeEvidence | null) {
 export function WaterDecisionPanel({
   evidence,
   fallbackAreaKm2 = 3,
+  network,
   onPlanChange,
 }: {
   evidence?: GeeEvidence | null;
   fallbackAreaKm2?: number;
+  network?: DeliveryNetwork | null;
   onPlanChange?: (plan: DecisionPlan | null) => void;
 }) {
   const [demo, setDemo] = useState<DemoData | null>(null);
@@ -229,15 +291,25 @@ export function WaterDecisionPanel({
         if (strategy === '初始缺水量比例') return areaM2 * Math.max(stress, 1);
         return Math.sqrt(areaM2) * Math.max(stress, 1) ** 1.7;
       });
-      const usedM3 = strategy === '不补水' ? 0 : budget;
-      const supplies = allocateExact(usedM3, weights);
+      const requestedM3 =
+        strategy === '不补水'
+          ? 0
+          : Math.min(budget, network?.availableM3 ?? budget);
+      const caps = prepared.map(({ metric }) => {
+        const route = network?.constraints[metric.id];
+        return route?.status === 'closed'
+          ? 0
+          : (route?.maxDeliveryM3 ?? requestedM3);
+      });
+      const supplies = allocateCapped(requestedM3, weights, caps);
       const units = prepared.map(({ metric, areaM2, stress }, index) => {
         const supplyM3 = supplies[index];
-        const effectiveDepthMm = ((supplyM3 * 0.8) / areaM2) * 1000;
-        const response = Math.min(
-          0.65,
-          (1 - Math.exp(-effectiveDepthMm / 18)) *
-            (strategy === '七天缺水指标优化' ? 1.08 : 1),
+        const route = network?.constraints[metric.id];
+        const efficiency = route?.efficiency ?? 0.8;
+        const effectiveDepthMm = ((supplyM3 * efficiency) / areaM2) * 1000;
+        const response = responseAtDepth(
+          effectiveDepthMm,
+          strategy === '七天缺水指标优化',
         );
         return {
           id: metric.id,
@@ -249,8 +321,12 @@ export function WaterDecisionPanel({
           effectiveDepthMm,
           ndmi: metric.ndmi,
           validFraction: metric.validFraction,
+          routeStatus: route?.status ?? 'open',
+          efficiency,
+          sourceName: route?.sourceName ?? network?.sourceName ?? '情景水源',
         };
       });
+      const usedM3 = units.reduce((sum, unit) => sum + unit.supplyM3, 0);
       const areaTotal = units.reduce((sum, unit) => sum + unit.areaM2, 0);
       const riskBefore =
         units.reduce((sum, unit) => sum + unit.stressScore * unit.areaM2, 0) /
@@ -258,21 +334,46 @@ export function WaterDecisionPanel({
       const riskAfter =
         units.reduce((sum, unit) => sum + unit.riskAfter * unit.areaM2, 0) /
         Math.max(areaTotal, 1);
+      const riskAtEfficiencyOffset = (offset: number) =>
+        units.reduce((sum, unit) => {
+          const efficiency = clamp(unit.efficiency + offset, 0.1, 1);
+          const depth = ((unit.supplyM3 * efficiency) / unit.areaM2) * 1000;
+          return (
+            sum +
+            unit.stressScore *
+              (1 - responseAtDepth(depth, strategy === '七天缺水指标优化')) *
+              unit.areaM2
+          );
+        }, 0) / Math.max(areaTotal, 1);
+      const riskLowBenefit = riskAtEfficiencyOffset(-0.15);
+      const riskHighBenefit = riskAtEfficiencyOffset(0.1);
       return {
         strategy,
         budgetM3: budget,
+        requestedM3,
         usedM3,
+        unallocatedM3: strategy === '不补水' ? 0 : Math.max(0, budget - usedM3),
         riskBefore,
         riskAfter,
         improvement:
           riskBefore > 0 ? clamp((riskBefore - riskAfter) / riskBefore) : 0,
         source: 'gee',
+        sensitivity: {
+          improvementLow:
+            riskBefore > 0
+              ? clamp((riskBefore - riskLowBenefit) / riskBefore)
+              : 0,
+          improvementHigh:
+            riskBefore > 0
+              ? clamp((riskBefore - riskHighBenefit) / riskBefore)
+              : 0,
+        },
         units,
       };
     }
     if (!demo) return null;
     const sourceUnits = demo.strategies['不补水'].units;
-    const usedM3 = strategy === '不补水' ? 0 : budget;
+    const requestedM3 = strategy === '不补水' ? 0 : budget;
     const maxLoss = Math.max(...sourceUnits.map((unit) => unit.loss), 1);
     const prepared = sourceUnits.map((unit) => ({
       unit,
@@ -285,7 +386,7 @@ export function WaterDecisionPanel({
       if (strategy === '初始缺水量比例') return areaM2 * Math.max(stress, 1);
       return Math.sqrt(areaM2) * Math.max(stress, 1) ** 1.7;
     });
-    const supplies = allocateExact(usedM3, weights);
+    const supplies = allocateExact(requestedM3, weights);
     const units = prepared.map(({ unit, areaM2, stress }, index) => {
       const supplyM3 = supplies[index];
       const effectiveDepthMm = ((supplyM3 * 0.8) / areaM2) * 1000;
@@ -304,8 +405,12 @@ export function WaterDecisionPanel({
         effectiveDepthMm,
         ndmi: null,
         validFraction: null,
+        routeStatus: 'open' as const,
+        efficiency: 0.8,
+        sourceName: '情景水源',
       };
     });
+    const usedM3 = units.reduce((sum, unit) => sum + unit.supplyM3, 0);
     const areaTotal = units.reduce((sum, unit) => sum + unit.areaM2, 0);
     const riskBefore =
       units.reduce((sum, unit) => sum + unit.stressScore * unit.areaM2, 0) /
@@ -316,15 +421,27 @@ export function WaterDecisionPanel({
     return {
       strategy,
       budgetM3: budget,
+      requestedM3,
       usedM3,
+      unallocatedM3: strategy === '不补水' ? 0 : Math.max(0, budget - usedM3),
       riskBefore,
       riskAfter,
       improvement:
         riskBefore > 0 ? clamp((riskBefore - riskAfter) / riskBefore) : 0,
       source: 'scenario',
+      sensitivity: {
+        improvementLow: Math.max(
+          0,
+          (riskBefore - riskAfter * 1.08) / Math.max(riskBefore, 1),
+        ),
+        improvementHigh: Math.max(
+          0,
+          (riskBefore - riskAfter * 0.92) / Math.max(riskBefore, 1),
+        ),
+      },
       units,
     };
-  }, [budget, demo, evidence, fallbackAreaKm2, strategy]);
+  }, [budget, demo, evidence, fallbackAreaKm2, network, strategy]);
   useEffect(() => {
     onPlanChange?.(plan);
   }, [onPlanChange, plan]);
@@ -337,7 +454,7 @@ export function WaterDecisionPanel({
       <div className="grid border-b border-[#d5dedb] bg-[#f5f8f7] lg:grid-cols-[1fr_auto]">
         <div className="px-6 py-5 lg:px-8">
           <div className="eyebrow">
-            <span>03</span> SCENARIO OPTIMIZATION
+            <span>05</span> SCENARIO OPTIMIZATION
           </div>
           <h2 className="mt-2 text-2xl font-semibold tracking-tight text-[#102f31]">
             生态补水处方
@@ -388,7 +505,7 @@ export function WaterDecisionPanel({
                     aria-label="可用生态水量"
                     type="number"
                     min="0"
-                    max="200000"
+                    max={network?.availableM3 ?? 200000}
                     step="500"
                     value={budget}
                     onChange={(event) =>
@@ -410,6 +527,15 @@ export function WaterDecisionPanel({
                     </button>
                   ))}
                 </div>
+                {network && (
+                  <p className="mt-3 text-xs leading-5 text-[#667874]">
+                    水源可供上限 {formatM3(network.availableM3)}{' '}
+                    m³；线路约束后本方案
+                    {plan.unallocatedM3 > 0
+                      ? `有 ${formatM3(plan.unallocatedM3)} m³ 无法下达。`
+                      : '可全部下达。'}
+                  </p>
+                )}
                 <div className="mt-6 text-sm font-semibold text-[#304b48]">
                   分配策略
                 </div>
@@ -435,7 +561,7 @@ export function WaterDecisionPanel({
                 </div>
               </div>
               <div>
-                <div className="grid gap-px overflow-hidden border border-[#c6d0cd] bg-[#c6d0cd] sm:grid-cols-3">
+                <div className="grid gap-px overflow-hidden border border-[#c6d0cd] bg-[#c6d0cd] sm:grid-cols-2 xl:grid-cols-4">
                   <Metric
                     icon={<Droplets className="size-4" />}
                     label="已分配水量"
@@ -443,6 +569,12 @@ export function WaterDecisionPanel({
                     detail={
                       plan.usedM3 ? '按单元优先级完成分配' : '作为无干预对照'
                     }
+                  />
+                  <Metric
+                    icon={<Waves className="size-4" />}
+                    label="未满足水量"
+                    value={`${formatM3(plan.unallocatedM3)} m³`}
+                    detail="受水源与线路输水上限共同约束"
                   />
                   <Metric
                     icon={<Gauge className="size-4" />}
@@ -485,8 +617,10 @@ export function WaterDecisionPanel({
                     />
                   </div>
                   <p className="mt-4 text-xs leading-5 text-[#71817d]">
-                    响应曲线假定输水效率80%、有效水深18
-                    mm为响应尺度；用于方案比较，不替代现场调度参数。
+                    响应曲线采用各线路到达效率和18
+                    mm响应尺度；预计改善在效率变动下约为
+                    {(plan.sensitivity.improvementLow * 100).toFixed(1)}%—
+                    {(plan.sensitivity.improvementHigh * 100).toFixed(1)}%。
                   </p>
                 </div>
               </div>
@@ -510,12 +644,13 @@ export function WaterDecisionPanel({
                   </button>
                 </div>
                 <div className="overflow-x-auto">
-                  <table className="w-full min-w-[760px] border-collapse text-sm">
+                  <table className="w-full min-w-[900px] border-collapse text-sm">
                     <thead>
                       <tr className="bg-[#f5f8f7] text-left text-xs text-[#647570]">
                         <th className="px-5 py-3 font-semibold">单元</th>
                         <th className="px-4 py-3 font-semibold">遥感压力</th>
                         <th className="px-4 py-3 font-semibold">NDMI</th>
+                        <th className="px-4 py-3 font-semibold">输水条件</th>
                         <th className="px-4 py-3 font-semibold">建议水量</th>
                         <th className="px-4 py-3 font-semibold">有效水深</th>
                         <th className="px-5 py-3 font-semibold">方案后风险</th>
@@ -542,6 +677,20 @@ export function WaterDecisionPanel({
                           </td>
                           <td className="px-4 py-4 font-mono text-[#315b54]">
                             {unit.ndmi?.toFixed(3) ?? '待诊断'}
+                          </td>
+                          <td className="px-4 py-4">
+                            <span
+                              className={`status-pill ${unit.routeStatus === 'open' ? 'safe' : unit.routeStatus === 'limited' ? 'warning' : 'danger'}`}
+                            >
+                              {unit.routeStatus === 'open'
+                                ? '畅通'
+                                : unit.routeStatus === 'limited'
+                                  ? '受限'
+                                  : '中断'}
+                            </span>
+                            <span className="mt-1 block font-mono text-xs text-[#70807c]">
+                              {(unit.efficiency * 100).toFixed(0)}% 到达率
+                            </span>
                           </td>
                           <td className="px-4 py-4 font-mono font-semibold text-[#9a6b13]">
                             {formatM3(unit.supplyM3)} m³
@@ -603,7 +752,8 @@ export function WaterDecisionPanel({
                         STRATEGIES.find((item) => item.key === strategy)
                           ?.description
                       }
-                      。
+                      ；同时受{network?.sourceName || '情景水源'}
+                      可供量、线路状态和到达效率约束。
                     </p>
                   </li>
                   <li className="flex gap-3">

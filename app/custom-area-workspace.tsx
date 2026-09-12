@@ -26,6 +26,11 @@ import {
   type GeeEvidence,
   type GeeUnitMetric,
 } from './water-decision-panel';
+import {
+  EvidenceContextPanel,
+  type ContextEvidence,
+} from './evidence-context-panel';
+import { WaterNetworkPanel, type DeliveryNetwork } from './water-network-panel';
 
 type Position = [number, number];
 type PolygonCoordinates = Position[][];
@@ -76,6 +81,7 @@ type GeeResult = {
   dataSource?: string;
   scaleM?: number;
   qualityNote?: string;
+  context?: ContextEvidence;
 };
 
 const MAX_FILE_BYTES = 25 * 1024 * 1024;
@@ -320,6 +326,8 @@ export function CustomAreaWorkspace() {
   const [geeResult, setGeeResult] = useState<GeeResult | null>(null);
   const [baselineResult, setBaselineResult] = useState<GeeResult | null>(null);
   const [decisionPlan, setDecisionPlan] = useState<DecisionPlan | null>(null);
+  const [deliveryNetwork, setDeliveryNetwork] =
+    useState<DeliveryNetwork | null>(null);
   const paths = useMemo(
     () => (summary ? geometryPaths(summary) : []),
     [summary],
@@ -371,6 +379,7 @@ export function CustomAreaWorkspace() {
       setSummary(normalizeCollection(parsed, file.name));
       setGeeResult(null);
       setBaselineResult(null);
+      setDeliveryNetwork(null);
     } catch (cause) {
       setSummary(null);
       setError(cause instanceof Error ? cause.message : '边界读取失败。');
@@ -391,6 +400,7 @@ export function CustomAreaWorkspace() {
       );
       setGeeResult(null);
       setBaselineResult(null);
+      setDeliveryNetwork(null);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : '演示研究区读取失败。');
     } finally {
@@ -452,6 +462,7 @@ export function CustomAreaWorkspace() {
         dataSource: payload.dataSource,
         scaleM: payload.scaleM,
         qualityNote: payload.qualityNote,
+        context: payload.context,
       };
       setGeeResult(result);
       setGeeAnalysisMessage(
@@ -477,6 +488,7 @@ export function CustomAreaWorkspace() {
         crs: summary.crs,
       },
       observation: geeResult,
+      deliveryNetwork,
       decision: decisionPlan,
       baseline: baselineResult,
       verification: {
@@ -489,7 +501,7 @@ export function CustomAreaWorkspace() {
         ],
       },
       assumptions: [
-        '处方模型输水效率默认80%',
+        '输水效率和单线上限由页面参数给定',
         '有效水深18 mm作为情景响应尺度',
         '风险响应上限65%',
         '正式调度前须以实测数据标定',
@@ -603,7 +615,7 @@ export function CustomAreaWorkspace() {
             </h1>
           </div>
           <p className="max-w-xl text-sm leading-7 text-[#5c6b67]">
-            上传管理单元后，直接调用GEE生成单元级水分证据，再在有限水量约束下形成补水优先级，并用补水后复测验证效果。
+            上传管理单元后，组合遥感、气候与历史水面证据，再按水源可供量和输水连通性形成单元处方，最后复测验证。
           </p>
         </div>
         <div className="workflow-strip mt-8">
@@ -621,12 +633,24 @@ export function CustomAreaWorkspace() {
           />
           <WorkflowStep
             index="03"
+            title="背景证据"
+            detail="气候与近5年异常"
+            state={geeResult?.context ? 'done' : 'idle'}
+          />
+          <WorkflowStep
+            index="04"
+            title="输水约束"
+            detail="水源、通道与效率"
+            state={deliveryNetwork ? 'done' : geeResult ? 'active' : 'idle'}
+          />
+          <WorkflowStep
+            index="05"
             title="生成处方"
             detail="预算约束下分配"
             state={geeResult ? (decisionPlan ? 'done' : 'active') : 'idle'}
           />
           <WorkflowStep
-            index="04"
+            index="06"
             title="复测闭环"
             detail="补水前后同窗对比"
             state={baselineResult ? 'active' : 'idle'}
@@ -1035,9 +1059,20 @@ export function CustomAreaWorkspace() {
             )}
           </div>
         </div>
+        {geeResult?.context && (
+          <EvidenceContextPanel context={geeResult.context} />
+        )}
+        {geeResult?.unitMetrics.length ? (
+          <WaterNetworkPanel
+            key={`${summary?.fileName || 'area'}-${geeResult.unitMetrics.map((unit) => unit.id).join('-')}`}
+            units={geeResult.unitMetrics}
+            onChange={setDeliveryNetwork}
+          />
+        ) : null}
         <WaterDecisionPanel
           evidence={evidence}
           fallbackAreaKm2={summary?.areaKm2 || 3}
+          network={deliveryNetwork}
           onPlanChange={setDecisionPlan}
         />
 
@@ -1051,7 +1086,7 @@ export function CustomAreaWorkspace() {
                 <div>
                   <div className="eyebrow">
                     <span />
-                    STEP 04 · VERIFY
+                    STEP 06 · VERIFY
                   </div>
                   <h2
                     id="verification-title"
