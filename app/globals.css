@@ -7,18 +7,203 @@
   --foreground: #17312d;
 }
 
-* { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
+* {
+  box-sizing: border-box;
+}
+html {
+  scroll-behavior: smooth;
+}
 body {
   margin: 0;
-  background: var(--background);
+  background:
+    radial-gradient(circle at 8% 0%, rgb(255 255 255 / 72%), transparent 30rem),
+    linear-gradient(180deg, #eef3f0 0%, var(--background) 42rem);
   color: var(--foreground);
-  font-family: 'Microsoft YaHei', 'PingFang SC', 'Noto Sans CJK SC', system-ui, sans-serif;
+  font-family:
+    'Microsoft YaHei', 'PingFang SC', 'Noto Sans CJK SC', system-ui, sans-serif;
 }
-button, input, select { font: inherit; }
-button { cursor: pointer; }
-button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible {
+button,
+input,
+select {
+  font: inherit;
+}
+button {
+  cursor: pointer;
+}
+input,
+select {
+  border-color: #aebdb8;
+  color: #17332f;
+}
+input:hover,
+select:hover {
+  border-color: #6c9188;
+}
+button:disabled {
+  cursor: not-allowed;
+}
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible {
   outline: 2px solid #d9aa45;
   outline-offset: 2px;
 }
-::selection { color: #17332f; background: #efd183; }
+::selection {
+  color: #17332f;
+  background: #efd183;
+}
+
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: #8b671e;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+}
+.eyebrow > span {
+  width: 2rem;
+  height: 1px;
+  background: currentColor;
+}
+
+.action-primary,
+.action-secondary {
+  display: inline-flex;
+  min-height: 2.55rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 1px solid transparent;
+  padding: 0.62rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  transition:
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    transform 0.18s ease;
+}
+.action-primary {
+  background: #176c5b;
+  color: white;
+}
+.action-primary:hover:not(:disabled) {
+  background: #10594b;
+  transform: translateY(-1px);
+}
+.action-secondary {
+  border-color: #96aaa4;
+  background: white;
+  color: #265d53;
+}
+.action-secondary:hover:not(:disabled) {
+  border-color: #176c5b;
+  background: #f0f7f4;
+}
+.action-primary:disabled,
+.action-secondary:disabled {
+  opacity: 0.46;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: max-content;
+  border: 1px solid;
+  border-radius: 999px;
+  padding: 0.34rem 0.68rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.status-pill.safe {
+  border-color: #a9d8c9;
+  background: #e7f5f0;
+  color: #176451;
+}
+.status-pill.warning {
+  border-color: #ead29f;
+  background: #fff7e6;
+  color: #7b5817;
+}
+.status-pill.danger {
+  border-color: #e4b5aa;
+  background: #fbeae6;
+  color: #893c30;
+}
+
+.trace-number {
+  display: grid;
+  width: 1.55rem;
+  height: 1.55rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid rgb(220 179 83 / 70%);
+  color: #efca70;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.72rem;
+}
+
+.workflow-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  overflow: hidden;
+  border: 1px solid #bbc9c5;
+  background: #bbc9c5;
+  gap: 1px;
+  box-shadow: 0 12px 34px rgb(25 57 51 / 7%);
+}
+.workflow-step {
+  display: flex;
+  min-height: 5.3rem;
+  align-items: center;
+  gap: 0.8rem;
+  background: rgb(255 255 255 / 82%);
+  padding: 1rem 1.15rem;
+  color: #75847f;
+}
+.workflow-step > span {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid #bbc8c4;
+}
+.workflow-step strong {
+  display: block;
+  color: #34514c;
+  font-size: 0.88rem;
+}
+.workflow-step small {
+  display: block;
+  margin-top: 0.22rem;
+  font-size: 0.68rem;
+}
+.workflow-step.done {
+  background: #e7f3ef;
+  color: #397366;
+}
+.workflow-step.done > span {
+  border-color: #2c8c74;
+  background: #2c8c74;
+  color: white;
+}
+.workflow-step.active {
+  background: #fffaf0;
+  color: #89651f;
+  box-shadow: inset 0 -3px 0 #d8aa45;
+}
+.workflow-step.active > span {
+  border-color: #d0a445;
+  color: #8d681d;
+}
+
+@media (max-width: 760px) {
+  .workflow-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

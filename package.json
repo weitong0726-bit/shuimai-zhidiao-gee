@@ -7,6 +7,8 @@
   },
   "scripts": {
     "dev": "vinext dev",
+    "dev:gee": ".venv-gee/bin/python tools/gee_bridge.py",
+    "dev:full": "node tools/dev_full.mjs",
     "build": "vinext build",
     "start": "wrangler dev --config dist/server/wrangler.json",
     "lint": "oxlint app components/ui/button.tsx components/ui/badge.tsx components/ui/native-select.tsx components/ui/slider.tsx",
