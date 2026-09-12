@@ -79,7 +79,7 @@ async function bridgeRequest(path: string, init?: RequestInit) {
   if (!bridge) return null;
   return fetch(`${bridge}${path}`, {
     ...init,
-    signal: AbortSignal.timeout(120_000),
+    signal: AbortSignal.timeout(300_000),
   });
 }
 
@@ -353,6 +353,14 @@ function pixelGrid(bounds: ReturnType<typeof boundsOf>) {
   };
 }
 
+function adaptiveScale(bounds: ReturnType<typeof boundsOf>) {
+  const span = Math.max(bounds.maxX - bounds.minX, bounds.maxY - bounds.minY);
+  if (span <= 1) return 20;
+  if (span <= 3) return 100;
+  if (span <= 8) return 250;
+  return 500;
+}
+
 function pngDataUrl(bytes: ArrayBuffer) {
   const data = new Uint8Array(bytes);
   let binary = '';
@@ -421,9 +429,12 @@ async function computeContextEvidence(
   sceneCount: number,
   unitMetrics: Array<{
     areaM2: number | null;
+    candidateWetlandAreaM2: number | null;
     validFraction: number | null;
     waterAreaM2: number | null;
   }>,
+  candidateWetland: EeObject,
+  analysisScale: number,
 ) {
   const era5 = ee
     .ImageCollection('ECMWF/ERA5_LAND/DAILY_AGGR')
@@ -500,11 +511,12 @@ async function computeContextEvidence(
       .normalizedDifference(['B8', 'B4'])
       .rename('NDVI')
       .addBands(composite.normalizedDifference(['B8', 'B11']).rename('NDMI'))
-      .addBands(composite.normalizedDifference(['B3', 'B11']).rename('MNDWI'));
+      .addBands(composite.normalizedDifference(['B3', 'B11']).rename('MNDWI'))
+      .updateMask(candidateWetland);
     const stats = yearlyMetrics.reduceRegion({
       reducer: ee.Reducer.mean(),
       geometry: region,
-      scale: 20,
+      scale: analysisScale,
       bestEffort: true,
       maxPixels: 1e9,
     });
@@ -548,7 +560,7 @@ async function computeContextEvidence(
   const runoff = finiteNumber(climateStats.runoff_mm);
   const occurrence = finiteNumber(waterStats.occurrence);
   const totalArea = unitMetrics.reduce(
-    (sum, unit) => sum + (unit.areaM2 || 0),
+    (sum, unit) => sum + (unit.candidateWetlandAreaM2 || 0),
     0,
   );
   const recentWaterFraction = totalArea
@@ -696,13 +708,13 @@ function validateRequest(payload: unknown) {
     boundary?.type !== 'FeatureCollection' ||
     !Array.isArray(boundary.features) ||
     boundary.features.length < 1 ||
-    boundary.features.length > 100
+    boundary.features.length > 150
   ) {
-    throw new Error('研究区必须包含1—100个面要素。');
+    throw new Error('研究区必须包含1—150个面要素。');
   }
   const features = boundary.features;
   const text = JSON.stringify(boundary);
-  if (text.length > 1_500_000)
+  if (text.length > 1_900_000)
     throw new Error('研究区边界过于复杂，请先简化边界。');
   const start = typeof input.start === 'string' ? input.start : '';
   const end = typeof input.end === 'string' ? input.end : '';
@@ -795,7 +807,7 @@ export async function POST(request: Request) {
   const requestId = crypto.randomUUID();
   try {
     const contentLength = Number(request.headers.get('content-length') || 0);
-    if (contentLength > 2_000_000)
+    if (contentLength > 2_200_000)
       return jsonWithTrace({ error: '研究区文件过大。' }, 413, requestId);
     checkRateLimit(request);
     const validated = validateRequest(await request.json());
@@ -824,6 +836,8 @@ export async function POST(request: Request) {
       ),
     );
     const region = units.geometry();
+    const bounds = boundsOf(boundary.features);
+    const analysisScale = adaptiveScale(bounds);
     const sourceCollection = ee
       .ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
       .filterBounds(region)
@@ -855,6 +869,40 @@ export async function POST(request: Request) {
     const ndmi = composite.normalizedDifference(['B8', 'B11']).rename('NDMI');
     const mndwi = composite.normalizedDifference(['B3', 'B11']).rename('MNDWI');
     const metrics = ndvi.addBands(ndmi).addBands(mndwi);
+    const jrc = ee.Image('JRC/GSW1_4/GlobalSurfaceWater');
+    const dynamicWorld = ee
+      .ImageCollection('GOOGLE/DYNAMICWORLD/V1')
+      .filterBounds(region)
+      .filterDate(start, end)
+      .select(['water', 'flooded_vegetation'])
+      .mean();
+    const candidateWetland = jrc
+      .select('occurrence')
+      .gt(5)
+      .or(
+        dynamicWorld
+          .select('water')
+          .max(dynamicWorld.select('flooded_vegetation'))
+          .gt(0.25),
+      )
+      .rename('candidate_wetland');
+    const candidateMask = candidateWetland.unmask(0);
+    const merit = ee.Image('MERIT/Hydro/v1_0_1');
+    const lowHand = ee
+      .Image(1)
+      .subtract(merit.select('hnd').clamp(0, 10).divide(10));
+    const potentialAccess = lowHand
+      .multiply(0.65)
+      .add(
+        jrc
+          .select('occurrence')
+          .unmask(0)
+          .divide(100)
+          .clamp(0, 1)
+          .multiply(0.35),
+      )
+      .multiply(100)
+      .rename('potential_access');
     let image = composite;
     let bandIds = ['B4', 'B3', 'B2'];
     let visualizationOptions: Record<string, unknown> = {
@@ -887,7 +935,7 @@ export async function POST(request: Request) {
     const imageUrl = await computePng(
       image,
       auth,
-      pixelGrid(boundsOf(boundary.features)),
+      pixelGrid(bounds),
       bandIds,
       visualizationOptions,
     );
@@ -898,7 +946,7 @@ export async function POST(request: Request) {
         image.reduceRegion({
           reducer: ee.Reducer.mean(),
           geometry: region,
-          scale: 20,
+          scale: analysisScale,
           bestEffort: true,
           maxPixels: 1e9,
         }),
@@ -911,10 +959,20 @@ export async function POST(request: Request) {
     const pixelArea = ee.Image.pixelArea();
     const areaBands = pixelArea
       .rename('pixel_area_m2')
-      .addBands(pixelArea.multiply(valid.unmask(0)).rename('valid_area_m2'))
+      .addBands(
+        pixelArea.multiply(candidateMask).rename('candidate_wetland_area_m2'),
+      )
       .addBands(
         pixelArea
-          .multiply(water.updateMask(valid).unmask(0))
+          .multiply(candidateMask)
+          .multiply(valid.unmask(0))
+          .rename('valid_area_m2'),
+      )
+      .addBands(
+        pixelArea
+          .multiply(water.unmask(0))
+          .multiply(valid.unmask(0))
+          .multiply(candidateMask)
           .rename('water_area_m2'),
       );
     const combinedReducer = (ee.Reducer.mean() as EeObject).combine({
@@ -924,18 +982,28 @@ export async function POST(request: Request) {
     const reduced = await evaluate<{
       features?: Array<{ properties?: Record<string, unknown> }>;
     }>(
-      metrics.addBands(areaBands).reduceRegions({
-        collection: units,
-        reducer: combinedReducer,
-        scale: 20,
-        tileScale: 4,
-      }),
+      metrics
+        .updateMask(candidateWetland)
+        .addBands(potentialAccess.updateMask(candidateWetland))
+        .addBands(
+          merit.select('hnd').rename('hand_m').updateMask(candidateWetland),
+        )
+        .addBands(areaBands)
+        .reduceRegions({
+          collection: units,
+          reducer: combinedReducer,
+          scale: analysisScale,
+          tileScale: 4,
+        }),
     );
     const unitMetrics = (reduced.features || []).map((feature, position) => {
       const properties = feature.properties || {};
       const source = boundary.features[position]?.properties || {};
       const areaM2 = finiteNumber(properties.pixel_area_m2_sum);
       const validAreaM2 = finiteNumber(properties.valid_area_m2_sum);
+      const candidateWetlandAreaM2 = finiteNumber(
+        properties.candidate_wetland_area_m2_sum,
+      );
       return {
         id: textValue([source.id, properties.id], `U${position + 1}`),
         name: textValue(
@@ -944,10 +1012,21 @@ export async function POST(request: Request) {
         ),
         areaM2,
         validFraction:
-          areaM2 && validAreaM2 !== null
-            ? Math.round(Math.min(1, validAreaM2 / areaM2) * 10_000) / 10_000
+          candidateWetlandAreaM2 && validAreaM2 !== null
+            ? Math.round(
+                Math.min(1, validAreaM2 / candidateWetlandAreaM2) * 10_000,
+              ) / 10_000
             : null,
         waterAreaM2: finiteNumber(properties.water_area_m2_sum),
+        candidateWetlandAreaM2,
+        candidateWetlandFraction:
+          areaM2 && candidateWetlandAreaM2 !== null
+            ? Math.round(
+                Math.min(1, candidateWetlandAreaM2 / areaM2) * 100_000,
+              ) / 100_000
+            : null,
+        accessibilityScore: finiteNumber(properties.potential_access_mean),
+        meanHandM: finiteNumber(properties.hand_m_mean),
         ndvi: finiteNumber(properties.NDVI_mean),
         ndmi: finiteNumber(properties.NDMI_mean),
         mndwi: finiteNumber(properties.MNDWI_mean),
@@ -960,6 +1039,8 @@ export async function POST(request: Request) {
       end,
       sceneCount,
       unitMetrics,
+      candidateWetland,
+      analysisScale,
     );
     const result = {
       imageUrl,
@@ -970,9 +1051,8 @@ export async function POST(request: Request) {
       generatedAt: new Date().toISOString(),
       projectId: auth.projectId,
       dataSource: 'COPERNICUS/S2_SR_HARMONIZED',
-      scaleM: 20,
-      qualityNote:
-        '已使用SCL剔除云、云影和雪像元；单元有效覆盖率过低时应延长时间窗口。',
+      scaleM: analysisScale,
+      qualityNote: `已使用SCL剔除云、云影和雪像元；当前为${analysisScale} m自适应统计尺度。湿地候选区由JRC历史水面和Dynamic World水体/淹水植被概率联合筛选。`,
       context,
     };
     cacheResult(resultCacheKey, result);

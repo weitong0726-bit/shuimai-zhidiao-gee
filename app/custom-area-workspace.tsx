@@ -30,7 +30,10 @@ import {
   EvidenceContextPanel,
   type ContextEvidence,
 } from './evidence-context-panel';
-import { WaterNetworkPanel, type DeliveryNetwork } from './water-network-panel';
+import {
+  ScreeningScenarioPanel,
+  type ScreeningScenario,
+} from './screening-scenario-panel';
 
 type Position = [number, number];
 type PolygonCoordinates = Position[][];
@@ -117,6 +120,18 @@ function collectPositions(value: unknown, output: Position[]) {
   value.forEach((item) => collectPositions(item, output));
 }
 
+function twoDimensionalCoordinates(value: unknown): unknown {
+  if (!Array.isArray(value)) return value;
+  if (
+    value.length >= 2 &&
+    typeof value[0] === 'number' &&
+    typeof value[1] === 'number'
+  ) {
+    return [value[0], value[1]] satisfies Position;
+  }
+  return value.map(twoDimensionalCoordinates);
+}
+
 function ringAreaKm2(ring: Position[], latitude: number) {
   if (ring.length < 3) return 0;
   const xScale = 111.32 * Math.cos((latitude * Math.PI) / 180);
@@ -163,8 +178,12 @@ function normalizeCollection(raw: unknown, fileName: string): AreaSummary {
         feature.geometry.type !== 'MultiPolygon')
     )
       return;
+    const geometry = {
+      type: feature.geometry.type,
+      coordinates: twoDimensionalCoordinates(feature.geometry.coordinates),
+    } as AreaGeometry;
     const positions: Position[] = [];
-    collectPositions(feature.geometry.coordinates, positions);
+    collectPositions(geometry.coordinates, positions);
     if (
       positions.length < 4 ||
       positions.some(
@@ -174,7 +193,13 @@ function normalizeCollection(raw: unknown, fileName: string): AreaSummary {
       return;
     const properties = { ...feature.properties };
     const rawId =
-      properties.id ?? properties.ID ?? properties.name ?? properties.NAME;
+      properties.id ??
+      properties.ID ??
+      properties.AdminCode ??
+      properties.BIANMA ??
+      properties.name ??
+      properties.Name ??
+      properties.NAME;
     const requestedId =
       (typeof rawId === 'string' || typeof rawId === 'number'
         ? String(rawId).trim()
@@ -184,18 +209,28 @@ function normalizeCollection(raw: unknown, fileName: string): AreaSummary {
       `U${index + 1}`;
     while (usedIds.has(id)) id = `${id}_${index + 1}`;
     usedIds.add(id);
+    const rawName =
+      properties.name ??
+      properties.Name ??
+      properties.NAME ??
+      properties.PYNAME ??
+      id;
+    const name =
+      typeof rawName === 'string' || typeof rawName === 'number'
+        ? String(rawName)
+        : id;
     features.push({
       type: 'Feature',
-      properties: { ...properties, id },
-      geometry: feature.geometry as AreaGeometry,
+      properties: { ...properties, id, name },
+      geometry,
     });
   });
   if (!features.length)
     throw new Error(
       '没有识别到Polygon或MultiPolygon面要素。请上传面状研究区，而不是点或线。',
     );
-  if (features.length > 100)
-    throw new Error('面要素超过100个。请先合并或筛选研究区，避免GEE任务过大。');
+  if (features.length > 150)
+    throw new Error('面要素超过150个。请先合并或筛选研究区，避免GEE任务过大。');
   const positions: Position[] = [];
   features.forEach((feature) =>
     collectPositions(feature.geometry.coordinates, positions),
@@ -277,13 +312,15 @@ async function makeGeeScript(
   if (!response.ok) throw new Error('无法读取GEE脚本模板。');
   let script = await response.text();
   const unitsCode = `var units = ee.FeatureCollection(${JSON.stringify(summary.collection)});`;
-  script = script.replace(
-    /\/\/ H1\/H2坐标来自[\s\S]*?\/\/ 每个feature必须有唯一id，且多边形不得重叠。/,
-    '// 用户上传的WGS84面状研究区；网站已补充唯一id。\n// 首次运行仍需在卫星底图核查地类、边界与供水连通性。',
+  const span = Math.max(
+    summary.bbox[2] - summary.bbox[0],
+    summary.bbox[3] - summary.bbox[1],
   );
+  const analysisScale =
+    span <= 1 ? 20 : span <= 3 ? 100 : span <= 8 ? 250 : 500;
   script = script.replace(
-    /var units = ee\.FeatureCollection\(\[[\s\S]*?\n\]\);/,
-    unitsCode,
+    /\/\/ BEGIN_ANALYSIS_UNITS[\s\S]*?\/\/ END_ANALYSIS_UNITS/,
+    `// 用户导入的WGS84面状分析单元；网站已标准化二维坐标并补充唯一id。\n${unitsCode}\n// 首次运行仍需核查边界现势性以及它是否代表真实滩区或管理单元。`,
   );
   script = script.replace(
     "var START = '2025-06-01';",
@@ -294,6 +331,7 @@ async function makeGeeScript(
     'var PERIOD_DAYS = 7;',
     `var PERIOD_DAYS = ${periodDays};`,
   );
+  script = script.replace('var SCALE = 20;', `var SCALE = ${analysisScale};`);
   script = script.replace(
     "var CRS = 'EPSG:32649';",
     `var CRS = '${summary.crs}';`,
@@ -326,8 +364,8 @@ export function CustomAreaWorkspace() {
   const [geeResult, setGeeResult] = useState<GeeResult | null>(null);
   const [baselineResult, setBaselineResult] = useState<GeeResult | null>(null);
   const [decisionPlan, setDecisionPlan] = useState<DecisionPlan | null>(null);
-  const [deliveryNetwork, setDeliveryNetwork] =
-    useState<DeliveryNetwork | null>(null);
+  const [screeningScenario, setScreeningScenario] =
+    useState<ScreeningScenario | null>(null);
   const paths = useMemo(
     () => (summary ? geometryPaths(summary) : []),
     [summary],
@@ -379,7 +417,7 @@ export function CustomAreaWorkspace() {
       setSummary(normalizeCollection(parsed, file.name));
       setGeeResult(null);
       setBaselineResult(null);
-      setDeliveryNetwork(null);
+      setScreeningScenario(null);
     } catch (cause) {
       setSummary(null);
       setError(cause instanceof Error ? cause.message : '边界读取失败。');
@@ -400,9 +438,37 @@ export function CustomAreaWorkspace() {
       );
       setGeeResult(null);
       setBaselineResult(null);
-      setDeliveryNetwork(null);
+      setScreeningScenario(null);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : '演示研究区读取失败。');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function loadYellowRiverArea() {
+    setBusy(true);
+    setError('');
+    try {
+      const response = await fetch(
+        '/wetland-data/yellow_river_counties.geojson',
+      );
+      if (!response.ok) throw new Error('黄河滩区涉及县域边界读取失败。');
+      setSummary(
+        normalizeCollection(
+          await response.json(),
+          '黄河滩区中下游涉及县域（用户资料）.geojson',
+        ),
+      );
+      setGeeResult(null);
+      setBaselineResult(null);
+      setScreeningScenario(null);
+    } catch (cause) {
+      setError(
+        cause instanceof Error
+          ? cause.message
+          : '黄河滩区涉及县域边界读取失败。',
+      );
     } finally {
       setBusy(false);
     }
@@ -479,7 +545,7 @@ export function CustomAreaWorkspace() {
     if (!summary || !geeResult) return;
     const artifact = {
       exportedAt: new Date().toISOString(),
-      project: '水脉智调｜湿地生态补水决策闭环',
+      project: '水脉智调｜湿地生态补水优先区识别与情景推演',
       boundary: {
         fileName: summary.fileName,
         unitCount: summary.collection.features.length,
@@ -488,23 +554,24 @@ export function CustomAreaWorkspace() {
         crs: summary.crs,
       },
       observation: geeResult,
-      deliveryNetwork,
+      screeningScenario,
       decision: decisionPlan,
       baseline: baselineResult,
       verification: {
-        recommendedWindow: '补水后7—14天',
+        recommendedWindow: '同物候期历史回测；具备实施记录后再做补水后复测',
         fieldChecks: [
-          '水源可供量与输水连通性',
+          '边界现势性与候选湿地空间范围',
           '样点水位与土壤含水率',
-          '植被盖度与群落状态',
-          '同一季节窗口下重复遥感观测',
+          '同期降雨、黄河来水与人为扰动',
+          '未来若实施补水，再补充水源、通道与实际水量',
         ],
       },
       assumptions: [
-        '输水效率和单线上限由页面参数给定',
-        '有效水深18 mm作为情景响应尺度',
-        '风险响应上限65%',
-        '正式调度前须以实测数据标定',
+        '候选湿地由JRC历史水面与Dynamic World当期水体/淹水植被概率识别',
+        '潜在可达性由MERIT Hydro HAND与JRC历史水面组合，不代表实际渠道连通',
+        '2/5/10 mm为等效水深情景，不代表已批准或可调配水量',
+        '单元情景等效水深上限为当前情景平均水深的2倍',
+        '县域边界仅用于初筛，不等同于精确滩区或湿地管理单元',
       ],
     };
     downloadText(
@@ -548,8 +615,8 @@ export function CustomAreaWorkspace() {
       ? comparableDelta === null
         ? '本期与基线指标不同，保留影像证据但不直接比较数值。'
         : comparableDelta > 0
-          ? `${geeResult.index}较基线提高${comparableDelta.toFixed(3)}，提示水分或植被状态改善；仍需排除降雨、物候与云污染影响。`
-          : `${geeResult.index}未出现正向变化，应复核输水到达率、补水时机和现场水分响应。`
+          ? `${geeResult.index}较基线提高${comparableDelta.toFixed(3)}，仅表示后期水分或植被状态更高；需结合同期降雨、来水与物候，不能直接归因于补水。`
+          : `${geeResult.index}较基线未提高，仅表示后期遥感状态未改善；需结合同期降雨、来水、物候和数据覆盖解释。`
       : '';
 
   async function downloadGeeScript() {
@@ -583,7 +650,7 @@ export function CustomAreaWorkspace() {
                 水脉智调
               </strong>
               <span className="mt-1 block text-xs text-[#65766f]">
-                湿地生态补水决策原型
+                湿地生态补水优先区筛查
               </span>
             </div>
           </div>
@@ -611,24 +678,24 @@ export function CustomAreaWorkspace() {
               DECISION WORKSPACE
             </div>
             <h1 className="max-w-3xl text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">
-              从湿地水分压力诊断，到可复核的补水处方
+              从湿地候选区识别，到可复核的补水情景优先级
             </h1>
           </div>
           <p className="max-w-xl text-sm leading-7 text-[#5c6b67]">
-            上传管理单元后，组合遥感、气候与历史水面证据，再按水源可供量和输水连通性形成单元处方，最后复测验证。
+            以公开遥感与水文地形数据识别候选湿地、诊断水分压力，并在不同等效水深情景下形成县域优先级；结果用于前期筛查，不冒充工程调度。
           </p>
         </div>
         <div className="workflow-strip mt-8">
           <WorkflowStep
             index="01"
             title="界定单元"
-            detail="导入或加载研究区"
+            detail="行政或自定义分析单元"
             state={summary ? 'done' : 'active'}
           />
           <WorkflowStep
             index="02"
             title="遥感诊断"
-            detail="S2水分与植被指标"
+            detail="S2 + JRC + DW"
             state={!summary ? 'idle' : geeResult ? 'done' : 'active'}
           />
           <WorkflowStep
@@ -639,20 +706,20 @@ export function CustomAreaWorkspace() {
           />
           <WorkflowStep
             index="04"
-            title="输水约束"
-            detail="水源、通道与效率"
-            state={deliveryNetwork ? 'done' : geeResult ? 'active' : 'idle'}
+            title="潜在可达性"
+            detail="HAND + 历史水面"
+            state={geeResult ? 'done' : 'idle'}
           />
           <WorkflowStep
             index="05"
-            title="生成处方"
-            detail="预算约束下分配"
+            title="情景优先级"
+            detail="2 / 5 / 10 mm情景"
             state={geeResult ? (decisionPlan ? 'done' : 'active') : 'idle'}
           />
           <WorkflowStep
             index="06"
-            title="复测闭环"
-            detail="补水前后同窗对比"
+            title="历史回测"
+            detail="同物候期对照"
             state={baselineResult ? 'active' : 'idle'}
           />
         </div>
@@ -686,6 +753,15 @@ export function CustomAreaWorkspace() {
             </label>
             <button
               type="button"
+              onClick={loadYellowRiverArea}
+              disabled={busy}
+              className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-[#e0b957] px-4 py-2.5 text-sm font-semibold text-[#f1d485] hover:bg-white/10 disabled:opacity-50"
+            >
+              <MapPinned className="size-4" />
+              加载黄河滩区涉及县域
+            </button>
+            <button
+              type="button"
               onClick={loadDemoArea}
               disabled={busy}
               className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-white/25 px-4 py-2.5 text-sm font-semibold text-white hover:bg-white/10 disabled:opacity-50"
@@ -694,7 +770,7 @@ export function CustomAreaWorkspace() {
               加载惠济湿地演示区
             </button>
             <p className="mt-3 text-xs leading-5 text-[#9ebbb4]">
-              最多25MB、100个面要素。点和线文件不会进入分析。
+              最多25MB、150个面要素。点和线文件不会进入分析。
             </p>
             <ol className="mt-6 space-y-3 border-t border-white/10 pt-5 text-xs leading-5 text-[#c7dad5]">
               <li className="flex gap-3">
@@ -713,7 +789,7 @@ export function CustomAreaWorkspace() {
                 <span className="grid size-6 shrink-0 place-items-center rounded-full border border-white/25">
                   3
                 </span>
-                <span>生成补水处方并安排复测</span>
+                <span>生成情景优先级并开展历史回测</span>
               </li>
             </ol>
             {error && (
@@ -1002,12 +1078,12 @@ export function CustomAreaWorkspace() {
                         <table className="w-full min-w-[720px] text-sm">
                           <thead>
                             <tr className="bg-[#f4f7f5] text-left text-xs text-[#667773]">
-                              <th className="px-5 py-3">管理单元</th>
+                              <th className="px-5 py-3">分析单元</th>
                               <th className="px-4 py-3">有效覆盖</th>
                               <th className="px-4 py-3">NDVI</th>
                               <th className="px-4 py-3">NDMI</th>
-                              <th className="px-4 py-3">MNDWI</th>
-                              <th className="px-5 py-3">识别水面</th>
+                              <th className="px-4 py-3">候选湿地</th>
+                              <th className="px-5 py-3">潜在可达性</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -1034,12 +1110,16 @@ export function CustomAreaWorkspace() {
                                   {unit.ndmi?.toFixed(3) ?? '—'}
                                 </td>
                                 <td className="px-4 py-3 font-mono">
-                                  {unit.mndwi?.toFixed(3) ?? '—'}
+                                  {unit.candidateWetlandAreaM2 === null ||
+                                  unit.candidateWetlandAreaM2 === undefined
+                                    ? '—'
+                                    : `${(unit.candidateWetlandAreaM2 / 1_000_000).toFixed(2)} km²`}
                                 </td>
                                 <td className="px-5 py-3 font-mono">
-                                  {unit.waterAreaM2 === null
+                                  {unit.accessibilityScore === null ||
+                                  unit.accessibilityScore === undefined
                                     ? '—'
-                                    : `${(unit.waterAreaM2 / 10000).toFixed(2)} ha`}
+                                    : unit.accessibilityScore.toFixed(3)}
                                 </td>
                               </tr>
                             ))}
@@ -1063,16 +1143,15 @@ export function CustomAreaWorkspace() {
           <EvidenceContextPanel context={geeResult.context} />
         )}
         {geeResult?.unitMetrics.length ? (
-          <WaterNetworkPanel
+          <ScreeningScenarioPanel
             key={`${summary?.fileName || 'area'}-${geeResult.unitMetrics.map((unit) => unit.id).join('-')}`}
             units={geeResult.unitMetrics}
-            onChange={setDeliveryNetwork}
+            onChange={setScreeningScenario}
           />
         ) : null}
         <WaterDecisionPanel
           evidence={evidence}
-          fallbackAreaKm2={summary?.areaKm2 || 3}
-          network={deliveryNetwork}
+          scenario={screeningScenario}
           onPlanChange={setDecisionPlan}
         />
 
@@ -1092,10 +1171,10 @@ export function CustomAreaWorkspace() {
                     id="verification-title"
                     className="mt-2 text-2xl font-semibold text-[#143638]"
                   >
-                    补水后复测与效果归因
+                    历史回测与后续实测
                   </h2>
                   <p className="mt-2 max-w-2xl text-sm leading-6 text-[#657672]">
-                    保存补水前的同类指标，实施处方后7—14天重新选择日期并运行分析；系统只在指标一致时计算变化值。
+                    先用不同年份的同物候期影像检查排序稳定性。未来若取得真实补水记录，再把实施前后窗口加入验证；数值变化本身不代表补水因果效应。
                   </p>
                 </div>
                 {geeResult && (
@@ -1105,7 +1184,7 @@ export function CustomAreaWorkspace() {
                     onClick={() => setBaselineResult(geeResult)}
                   >
                     <ShieldCheck className="size-4" />
-                    设为补水前基线
+                    设为回测基线
                   </button>
                 )}
               </div>
@@ -1117,7 +1196,7 @@ export function CustomAreaWorkspace() {
                       尚未保存基线
                     </p>
                     <p className="mt-1 text-xs text-[#748480]">
-                      先完成一次真实分析，再将结果设为补水前基线。
+                      先完成一次真实分析，再将该时段设为历史回测基线。
                     </p>
                   </div>
                 </div>
@@ -1173,32 +1252,40 @@ export function CustomAreaWorkspace() {
             </div>
             <aside className="bg-[#123d3b] p-6 text-white">
               <p className="text-xs tracking-[.16em] text-[#9dc0b9]">
-                FIELD CHECKLIST
+                VALIDATION LIMITS
               </p>
-              <h3 className="mt-2 text-lg font-semibold">现场复核最小清单</h3>
+              <h3 className="mt-2 text-lg font-semibold">
+                验证边界与最小补充资料
+              </h3>
               <ol className="mt-6 space-y-5 text-sm leading-6 text-[#d2e3df]">
                 <li className="flex gap-3">
                   <span className="trace-number">1</span>
-                  <span>核实水源可供量、闸门状态与输水通道连通性。</span>
+                  <span>
+                    复核县界现势性，并进一步裁出真实滩区或湿地候选斑块。
+                  </span>
                 </li>
                 <li className="flex gap-3">
                   <span className="trace-number">2</span>
-                  <span>在高、中、低压力单元布设水位与土壤水分样点。</span>
+                  <span>
+                    用不同传感器、年份和同期降雨记录交叉检查排序稳定性。
+                  </span>
                 </li>
                 <li className="flex gap-3">
                   <span className="trace-number">3</span>
-                  <span>记录实际补水量、起止时间、降雨和人为扰动。</span>
+                  <span>
+                    条件允许时，在高、中、低优先区布设固定水位与土壤水分样点。
+                  </span>
                 </li>
                 <li className="flex gap-3">
                   <span className="trace-number">4</span>
                   <span>
-                    同季节、同指标复测，形成“观测—决策—实施—验证”证据链。
+                    只有获得真实水源、渠道、闸门与补水量资料后，才能扩展为工程调度。
                   </span>
                 </li>
               </ol>
               <div className="mt-6 flex items-center gap-2 border-t border-white/10 pt-4 text-xs text-[#9dc0b9]">
                 <ArrowRight className="size-4" />
-                系统给出排序依据，最终调度由管理者复核。
+                系统完成前期筛查，不替代工程调度与管理审批。
               </div>
             </aside>
           </div>

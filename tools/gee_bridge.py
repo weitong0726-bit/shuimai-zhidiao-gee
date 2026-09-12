@@ -55,8 +55,8 @@ def validate_payload(payload: Any) -> dict[str, Any]:
     if not isinstance(boundary, dict) or boundary.get('type') != 'FeatureCollection':
         raise ValueError('研究区必须是FeatureCollection。')
     features = boundary.get('features')
-    if not isinstance(features, list) or not 1 <= len(features) <= 100:
-        raise ValueError('研究区必须包含1—100个面要素。')
+    if not isinstance(features, list) or not 1 <= len(features) <= 150:
+        raise ValueError('研究区必须包含1—150个面要素。')
     start, end = payload.get('start', ''), payload.get('end', '')
     index = payload.get('index', '')
     if not isinstance(start, str) or not isinstance(end, str) or len(start) != 10 or len(end) != 10 or start >= end:
@@ -93,11 +93,53 @@ def seasonal_window(year: int, start: str, end: str) -> tuple[str, str]:
     return shifted_start.isoformat(), (shifted_start + duration).isoformat()
 
 
+def coordinate_bounds(boundary: dict[str, Any]) -> tuple[float, float, float, float]:
+    points: list[tuple[float, float]] = []
+
+    def walk(value: Any) -> None:
+        if not isinstance(value, list):
+            return
+        if (
+            len(value) >= 2
+            and isinstance(value[0], (int, float))
+            and isinstance(value[1], (int, float))
+        ):
+            points.append((float(value[0]), float(value[1])))
+            return
+        for item in value:
+            walk(item)
+
+    for feature in boundary.get('features', []):
+        walk(feature.get('geometry', {}).get('coordinates'))
+    if not points:
+        raise ValueError('研究区边界无有效坐标。')
+    return (
+        min(point[0] for point in points),
+        min(point[1] for point in points),
+        max(point[0] for point in points),
+        max(point[1] for point in points),
+    )
+
+
+def adaptive_scale(boundary: dict[str, Any]) -> int:
+    min_x, min_y, max_x, max_y = coordinate_bounds(boundary)
+    span = max(max_x - min_x, max_y - min_y)
+    if span <= 1:
+        return 20
+    if span <= 3:
+        return 100
+    if span <= 8:
+        return 250
+    return 500
+
+
 def context_evidence(
     region: ee.Geometry,
     request: dict[str, Any],
     scene_count: int,
     unit_metrics: list[dict[str, Any]],
+    candidate_wetland: ee.Image,
+    analysis_scale: int,
 ) -> dict[str, Any]:
     era5 = ee.ImageCollection('ECMWF/ERA5_LAND/DAILY_AGGR').filterDate(
         request['start'], request['end']
@@ -124,7 +166,7 @@ def context_evidence(
     ).getInfo()
     occurrence = finite_number(water_stats.get('occurrence'))
     seasonality = finite_number(water_stats.get('seasonality'))
-    total_area = sum(metric.get('areaM2') or 0 for metric in unit_metrics)
+    total_area = sum(metric.get('candidateWetlandAreaM2') or 0 for metric in unit_metrics)
     recent_water_area = sum(metric.get('waterAreaM2') or 0 for metric in unit_metrics)
     recent_water_fraction = round(min(1, recent_water_area / total_area), 5) if total_area else None
 
@@ -144,9 +186,9 @@ def context_evidence(
             yearly_composite.normalizedDifference(['B8', 'B4']).rename('NDVI')
             .addBands(yearly_composite.normalizedDifference(['B8', 'B11']).rename('NDMI'))
             .addBands(yearly_composite.normalizedDifference(['B3', 'B11']).rename('MNDWI'))
-        )
+        ).updateMask(candidate_wetland)
         stats = yearly_metrics.reduceRegion(
-            reducer=ee.Reducer.mean(), geometry=region, scale=20,
+            reducer=ee.Reducer.mean(), geometry=region, scale=analysis_scale,
             bestEffort=True, maxPixels=1_000_000_000,
         )
         series_features.append(
@@ -233,6 +275,7 @@ def context_evidence(
 def analyze(payload: Any) -> dict[str, Any]:
     request = validate_payload(payload)
     initialize()
+    analysis_scale = adaptive_scale(request['boundary'])
     units = ee.FeatureCollection(request['boundary'])
     region = units.geometry()
     collection = (
@@ -254,18 +297,76 @@ def analyze(payload: Any) -> dict[str, Any]:
     mndwi = composite.normalizedDifference(['B3', 'B11']).rename('MNDWI')
     metrics = ndvi.addBands(ndmi).addBands(mndwi)
 
+    jrc = ee.Image('JRC/GSW1_4/GlobalSurfaceWater')
+    dynamic_world = (
+        ee.ImageCollection('GOOGLE/DYNAMICWORLD/V1')
+        .filterBounds(region)
+        .filterDate(request['start'], request['end'])
+        .select(['water', 'flooded_vegetation'])
+        .mean()
+    )
+    candidate_wetland = (
+        jrc.select('occurrence').gt(5)
+        .Or(
+            dynamic_world.select('water')
+            .max(dynamic_world.select('flooded_vegetation'))
+            .gt(0.25)
+        )
+        .rename('candidate_wetland')
+    )
+    candidate_mask = candidate_wetland.unmask(0)
+    merit = ee.Image('MERIT/Hydro/v1_0_1')
+    low_hand = ee.Image(1).subtract(
+        merit.select('hnd').clamp(0, 10).divide(10)
+    )
+    potential_access = (
+        low_hand.multiply(0.65)
+        .add(
+            jrc.select('occurrence')
+            .unmask(0)
+            .divide(100)
+            .clamp(0, 1)
+            .multiply(0.35)
+        )
+        .multiply(100)
+        .rename('potential_access')
+    )
+
     valid = metrics.mask().reduce(ee.Reducer.min()).rename('valid')
     water = mndwi.gt(0).And(ndvi.lt(0.3)).rename('water')
     area_bands = (
         ee.Image.pixelArea().rename('pixel_area_m2')
-        .addBands(ee.Image.pixelArea().multiply(valid.unmask(0)).rename('valid_area_m2'))
-        .addBands(ee.Image.pixelArea().multiply(water.updateMask(valid).unmask(0)).rename('water_area_m2'))
+        .addBands(
+            ee.Image.pixelArea()
+            .multiply(candidate_mask)
+            .rename('candidate_wetland_area_m2')
+        )
+        .addBands(
+            ee.Image.pixelArea()
+            .multiply(candidate_mask)
+            .multiply(valid.unmask(0))
+            .rename('valid_area_m2')
+        )
+        .addBands(
+            ee.Image.pixelArea()
+            .multiply(water.unmask(0))
+            .multiply(valid.unmask(0))
+            .multiply(candidate_mask)
+            .rename('water_area_m2')
+        )
     )
-    analysis_image = metrics.addBands(area_bands)
+    analysis_image = (
+        metrics.updateMask(candidate_wetland)
+        .addBands(potential_access.updateMask(candidate_wetland))
+        .addBands(
+            merit.select('hnd').rename('hand_m').updateMask(candidate_wetland)
+        )
+        .addBands(area_bands)
+    )
     reduced = analysis_image.reduceRegions(
         collection=units,
         reducer=ee.Reducer.mean().combine(ee.Reducer.sum(), sharedInputs=True),
-        scale=20,
+        scale=analysis_scale,
         tileScale=4,
     ).getInfo()
 
@@ -275,12 +376,19 @@ def analyze(payload: Any) -> dict[str, Any]:
         source = request['features'][position].get('properties', {}) if position < len(request['features']) else {}
         area_m2 = finite_number(properties.get('pixel_area_m2_sum'))
         valid_area_m2 = finite_number(properties.get('valid_area_m2_sum'))
+        candidate_area_m2 = finite_number(
+            properties.get('candidate_wetland_area_m2_sum')
+        )
         unit_metrics.append({
             'id': str(source.get('id') or properties.get('id') or f'U{position + 1}'),
             'name': str(source.get('name') or properties.get('name') or source.get('id') or f'单元{position + 1}'),
             'areaM2': area_m2,
-            'validFraction': round(min(1.0, valid_area_m2 / area_m2), 4) if area_m2 and valid_area_m2 is not None else None,
+            'validFraction': round(min(1.0, valid_area_m2 / candidate_area_m2), 4) if candidate_area_m2 and valid_area_m2 is not None else None,
             'waterAreaM2': finite_number(properties.get('water_area_m2_sum')),
+            'candidateWetlandAreaM2': candidate_area_m2,
+            'candidateWetlandFraction': round(min(1.0, candidate_area_m2 / area_m2), 5) if area_m2 and candidate_area_m2 is not None else None,
+            'accessibilityScore': finite_number(properties.get('potential_access_mean')),
+            'meanHandM': finite_number(properties.get('hand_m_mean')),
             'ndvi': finite_number(properties.get('NDVI_mean')),
             'ndmi': finite_number(properties.get('NDMI_mean')),
             'mndwi': finite_number(properties.get('MNDWI_mean')),
@@ -306,12 +414,19 @@ def analyze(payload: Any) -> dict[str, Any]:
     mean_value = None
     if request['index'] != 'RGB':
         stats = selected.reduceRegion(
-            reducer=ee.Reducer.mean(), geometry=region, scale=20,
+            reducer=ee.Reducer.mean(), geometry=region, scale=analysis_scale,
             bestEffort=True, maxPixels=1_000_000_000,
         ).getInfo()
         mean_value = finite_number(stats.get(request['index']))
 
-    context = context_evidence(region, request, scene_count, unit_metrics)
+    context = context_evidence(
+        region,
+        request,
+        scene_count,
+        unit_metrics,
+        candidate_wetland,
+        analysis_scale,
+    )
 
     return {
         'imageUrl': image_url,
@@ -322,8 +437,8 @@ def analyze(payload: Any) -> dict[str, Any]:
         'generatedAt': __import__('datetime').datetime.now(__import__('datetime').timezone.utc).isoformat(),
         'projectId': PROJECT_ID,
         'dataSource': 'COPERNICUS/S2_SR_HARMONIZED',
-        'scaleM': 20,
-        'qualityNote': '已使用SCL剔除云、云影和雪像元；单元有效覆盖率过低时应延长时间窗口。',
+        'scaleM': analysis_scale,
+        'qualityNote': f'已使用SCL剔除云、云影和雪像元；当前为{analysis_scale} m自适应统计尺度。湿地候选区由JRC历史水面和Dynamic World水体/淹水植被概率联合筛选。',
         'context': context,
     }
 
